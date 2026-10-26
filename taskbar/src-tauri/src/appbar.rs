@@ -20,8 +20,8 @@ use windows::Win32::UI::Shell::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     FindWindowW, GetSystemMetrics, IsWindow, IsWindowVisible, SendMessageTimeoutW,
-    SetWindowPos, ShowWindow, HWND_BOTTOM, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN,
-    SWP_NOACTIVATE, SWP_NOSENDCHANGING, SW_HIDE, SW_SHOWNA, WM_SETTINGCHANGE,
+    SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
+    SWP_NOSENDCHANGING, SWP_NOZORDER, SW_HIDE, SW_SHOWNA, WM_SETTINGCHANGE,
 };
 
 /// Which screen edge the bar sits on.
@@ -123,7 +123,14 @@ impl AppBar {
     ///
     /// `hwnd` must be a real top-level window; it is the handle Windows will
     /// send appbar notifications to.
-    pub fn new(hwnd: HWND, edge: Edge, thickness: i32) -> windows::core::Result<Self> {
+    /// `replace_shell` false leaves the shell's taskbar on screen and only
+    /// reserves the edge, which is the safe way to try the bar out.
+    pub fn new(
+        hwnd: HWND,
+        edge: Edge,
+        thickness: i32,
+        replace_shell: bool,
+    ) -> windows::core::Result<Self> {
         let mut bar = AppBar {
             hwnd,
             edge,
@@ -140,10 +147,12 @@ impl AppBar {
 
         // Hide the shell bar only once we hold the reservation, so there is no
         // window where neither bar owns the edge.
-        std::fs::create_dir_all(marker_path().parent().unwrap()).ok();
-        std::fs::write(marker_path(), b"1").ok();
-        HID_SHELL.store(true, Ordering::SeqCst);
-        set_shell_visible(false);
+        if replace_shell {
+            std::fs::create_dir_all(marker_path().parent().unwrap()).ok();
+            std::fs::write(marker_path(), b"1").ok();
+            HID_SHELL.store(true, Ordering::SeqCst);
+            set_shell_visible(false);
+        }
 
         bar.reposition();
         Ok(bar)
@@ -202,12 +211,12 @@ impl AppBar {
         unsafe {
             let _ = SetWindowPos(
                 self.hwnd,
-                HWND_BOTTOM,
+                HWND::default(),
                 x,
                 y,
                 cx,
                 cy,
-                SWP_NOACTIVATE | SWP_NOSENDCHANGING,
+                SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER,
             );
         }
     }

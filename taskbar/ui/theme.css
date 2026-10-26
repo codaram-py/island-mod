@@ -1,0 +1,96 @@
+/* Tokens the bar and the settings window share. Values are written onto
+   :root by applyTheme() in common.js, from the config the backend holds. */
+:root {
+  --bg: #14141a;
+  --fg: #e8e8ee;
+  --muted: #8b8b99;
+  --accent: #f0be5a;
+  --opacity: 0.82;
+  --radius: 0px;
+  --gap: 6px;
+  --font-size: 12px;
+  --font: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --pill: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font);
+  font-size: var(--font-size);
+  color: var(--fg);
+  /* The bar window is transparent; anything opaque is painted by .surface. */
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.surface {
+  background: color-mix(in srgb, var(--bg) calc(var(--opacity) * 100%), transparent);
+  border-radius: var(--radius);
+}
+
+.surface.blur {
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: default;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--pill);
+  white-space: nowrap;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.pill:hover {
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.pill:active {
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+  transform: translateY(0.5px);
+}
+
+.pill.on {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+}
+
+.pill.alert {
+  background: color-mix(in srgb, #ff5a52 24%, transparent);
+  color: #ff8d86;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.muted {
+  color: var(--muted);
+}
