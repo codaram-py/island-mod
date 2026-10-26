@@ -1,8 +1,7 @@
-import brotli, json, sys
+import brotli, json, os, sys
 sys.stdout.reconfigure(encoding="utf-8")
 
-with open(r'C:\Users\fdsmu\AppData\Local\Island\island_backup.exe', 'rb') as f:
-    orig = f.read()
+BAK = os.environ.get('ISLAND_BAK', r'C:\Users\fdsmu\AppData\Local\Island\island_backup.exe')
 
 BT = chr(96)
 BS = chr(92)
@@ -66,30 +65,34 @@ def extract(src):
     return pairs
 
 
-srcs = {
-    'island.js':    brotli.decompress(orig[9731348:9731348 + 239466]).decode('utf-8'),
-    'settings.js':  brotli.decompress(orig[10072089:10072089 + 33008]).decode('utf-8'),
-    'LangRoot.js':  brotli.decompress(orig[10001029:10001029 + 69191]).decode('utf-8'),
-    'Liquid.js':    brotli.decompress(orig[9970840:9970840 + 30161]).decode('utf-8'),
-    'undo2.js':     brotli.decompress(orig[10105123:10105123 + 3340]).decode('utf-8'),
-}
+if __name__ == '__main__':
+    with open(BAK, 'rb') as f:
+        orig = f.read()
 
-allpairs = {}
-for name, s in srcs.items():
-    p = extract(s)
-    print(f"{name:14s}: {len(p)} call sites")
-    for ru, en in p:
-        allpairs.setdefault(en, ru)
+    srcs = {
+        'island.js':    brotli.decompress(orig[9731348:9731348 + 239466]).decode('utf-8'),
+        'settings.js':  brotli.decompress(orig[10072089:10072089 + 33008]).decode('utf-8'),
+        'LangRoot.js':  brotli.decompress(orig[10001029:10001029 + 69191]).decode('utf-8'),
+        'Liquid.js':    brotli.decompress(orig[9970840:9970840 + 30161]).decode('utf-8'),
+        'undo2.js':     brotli.decompress(orig[10105123:10105123 + 3340]).decode('utf-8'),
+    }
 
-print(f"\nunique English literals: {len(allpairs)}")
+    allpairs = {}
+    for name, s in srcs.items():
+        p = extract(s)
+        print(f"{name:14s}: {len(p)} call sites")
+        for ru, en in p:
+            allpairs.setdefault(en, ru)
 
-tr = json.load(open('pt_translations.json', encoding='utf-8'))
-missing = {en: ru for en, ru in allpairs.items() if en not in tr}
-print(f"already translated      : {len(allpairs) - len(missing)}")
-print(f"MISSING translations    : {len(missing)}")
+    print(f"\nunique English literals: {len(allpairs)}")
 
-json.dump(missing, open('missing_en.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-json.dump(allpairs, open('all_pairs.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    tr = json.load(open('pt_translations.json', encoding='utf-8'))
+    missing = {en: ru for en, ru in allpairs.items() if en not in tr}
+    print(f"already translated      : {len(allpairs) - len(missing)}")
+    print(f"MISSING translations    : {len(missing)}")
 
-for en in list(missing)[:50]:
-    print("  " + en)
+    json.dump(missing, open('missing_en.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    json.dump(allpairs, open('all_pairs.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+
+    for en in list(missing)[:50]:
+        print("  " + en)

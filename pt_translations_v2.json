@@ -821,5 +821,11 @@
  "Screen screenshot": "Captura da tela",
  "Click to copy the colour · Esc to cancel": "Clique para copiar a cor · Esc para cancelar",
  "Select an area · click for the whole screen · Esc to cancel": "Selecione uma área · clique para a tela inteira · Esc para cancelar",
- "Select the whole QR code · Esc to cancel": "Selecione o QR code inteiro · Esc para cancelar"
+ "Select the whole QR code · Esc to cancel": "Selecione o QR code inteiro · Esc para cancelar",
+ "Chat history": "Histórico de conversas",
+ "No saved chats yet": "Nenhuma conversa salva ainda",
+ "tokens": "tokens",
+ "click to copy the conversation": "clique para copiar a conversa",
+ "Conversation copied": "Conversa copiada",
+ "Me": "Eu"
 }
