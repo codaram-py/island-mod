@@ -1,0 +1,106 @@
+{
+ "/settings.html": {
+  "path_off": 9712064,
+  "blob_off": 9712078,
+  "csz": 252,
+  "dsz": 663,
+  "recompressed": 233,
+  "slack": 19
+ },
+ "/assets/editor-BLwRnGeq.js": {
+  "path_off": 9712330,
+  "blob_off": 9712356,
+  "csz": 3739,
+  "dsz": 9634,
+  "recompressed": 3481,
+  "slack": 258
+ },
+ "/assets/LangRoot-C9Nebsta.css": {
+  "path_off": 9716095,
+  "blob_off": 9716124,
+  "csz": 12289,
+  "dsz": 77963,
+  "recompressed": 11333,
+  "slack": 956
+ },
+ "/index.html": {
+  "path_off": 9728413,
+  "blob_off": 9728424,
+  "csz": 249,
+  "dsz": 715,
+  "recompressed": 231,
+  "slack": 18
+ },
+ "/assets/overlay-BIHA1LAI.js": {
+  "path_off": 9728673,
+  "blob_off": 9728700,
+  "csz": 2356,
+  "dsz": 6206,
+  "recompressed": 2179,
+  "slack": 177
+ },
+ "/editor.html": {
+  "path_off": 9731056,
+  "blob_off": 9731068,
+  "csz": 254,
+  "dsz": 659,
+  "recompressed": 231,
+  "slack": 23
+ },
+ "/assets/island-D0bnrnc7.js": {
+  "path_off": 9731322,
+  "blob_off": 9731348,
+  "csz": 239466,
+  "dsz": 848343,
+  "recompressed": 220062,
+  "slack": 19404
+ },
+ "/assets/Liquid-IWWYSV_r.js": {
+  "path_off": 9970814,
+  "blob_off": 9970840,
+  "csz": 30161,
+  "dsz": 87190,
+  "recompressed": 27957,
+  "slack": 2204
+ },
+ "/assets/LangRoot-B1oi2SO4.js": {
+  "path_off": 10001001,
+  "blob_off": 10001029,
+  "csz": 69191,
+  "dsz": 237333,
+  "recompressed": 64248,
+  "slack": 4943
+ },
+ "/overlay.html": {
+  "path_off": 10070220,
+  "blob_off": 10070233,
+  "csz": 201,
+  "dsz": 483,
+  "recompressed": 183,
+  "slack": 18
+ },
+ "/assets/createLucideIcon-DU13TVjq.js": {
+  "path_off": 10070434,
+  "blob_off": 10070470,
+  "csz": 1591,
+  "dsz": 3663,
+  "recompressed": 1526,
+  "slack": 65
+ },
+ "/assets/settings-TI-OGeDC.js": {
+  "path_off": 10072061,
+  "blob_off": 10072089,
+  "csz": 33008,
+  "dsz": 126602,
+  "recompressed": 30484,
+  "slack": 2524
+ },
+ "/assets/undo-2-BcdGqcNN.js": {
+  "path_off": 10105097,
+  "blob_off": 10105123,
+  "csz": 3340,
+  "dsz": 13734,
+  "recompressed": 3137,
+  "slack": 203
+ }
+}

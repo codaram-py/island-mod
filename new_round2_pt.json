@@ -1,0 +1,17 @@
+{
+ "Arrow (A)": "Seta (A)",
+ "Box (R)": "Retângulo (R)",
+ "Marker (P)": "Marcador (P)",
+ "Text (T)": "Texto (T)",
+ "Hide data (B)": "Ocultar dados (B)",
+ "Undo (Ctrl+Z)": "Desfazer (Ctrl+Z)",
+ "Redo (Ctrl+Y)": "Refazer (Ctrl+Y)",
+ "Loading the screenshot…": "Carregando a captura…",
+ "Text, Enter": "Texto, Enter",
+ "Esc to close · Ctrl+Z to undo · Ctrl+C to copy · Ctrl+S to save and close": "Esc para fechar · Ctrl+Z para desfazer · Ctrl+C para copiar · Ctrl+S para salvar e fechar",
+ "Area screenshot": "Captura de área",
+ "Screen screenshot": "Captura da tela",
+ "Click to copy the colour · Esc to cancel": "Clique para copiar a cor · Esc para cancelar",
+ "Select an area · click for the whole screen · Esc to cancel": "Selecione uma área · clique para a tela inteira · Esc para cancelar",
+ "Select the whole QR code · Esc to cancel": "Selecione o QR code inteiro · Esc para cancelar"
+}
