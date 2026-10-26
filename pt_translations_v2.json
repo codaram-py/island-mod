@@ -827,5 +827,10 @@
  "tokens": "tokens",
  "click to copy the conversation": "clique para copiar a conversa",
  "Conversation copied": "Conversa copiada",
- "Me": "Eu"
+ "Me": "Eu",
+ "Rename the chat": "Renomear a conversa",
+ "Copy the conversation": "Copiar a conversa",
+ "click to pick a model": "clique para escolher o modelo",
+ "Loading the models…": "Carregando os modelos…",
+ "The model list is empty": "A lista de modelos está vazia"
 }

@@ -44,9 +44,16 @@ var l=rd(),o=[],i;
 for(i=0;i<l.length;i++)if(l[i].id!==id)o.push(l[i]);
 wr(o);if(getCur()===id)setCur(null);return o.length!==l.length}
 function rename(id,t){
-var l=rd(),i;
-for(i=0;i<l.length;i++)if(l[i].id===id){l[i].title=String(t||``).replace(/\s+/g,` `).trim().slice(0,80);l[i].renamed=!0;wr(l);return!0}
+var l=rd(),i,v=String(t||``).replace(/\s+/g,` `).trim().slice(0,80);
+for(i=0;i<l.length;i++)if(l[i].id===id){
+if(v){l[i].title=v;l[i].renamed=!0}else{l[i].title=mktitle(l[i].messages);l[i].renamed=!1}
+wr(l);return!0}
 return!1}
+function renameCur(t){var id=getCur()||save(M.getState().messages);return id?rename(id,t):!1}
+function label(ms){
+var id=getCur();
+if(id){var r=find(id);if(r&&r.renamed)return r.title}
+return mktitle(strip(live(ms||[])))}
 function auto(){
 var st=M.getState();if(st.streaming)return;
 var k=live(st.messages);if(k.length===0)return;
@@ -58,5 +65,5 @@ M.setState({reset:function(){save(M.getState().messages);setCur(null);sig=``;ret
 M.subscribe(sched);
 try{window.addEventListener(`beforeunload`,auto)}catch(e){}
 try{document.addEventListener(`visibilitychange`,function(){document.hidden&&auto()})}catch(e){}
-window.__sessions__={list:list,load:open,save:function(){return save(M.getState().messages)},delete:del,remove:del,rename:rename,current:getCur};
+window.__sessions__={list:list,load:open,save:function(){return save(M.getState().messages)},delete:del,remove:del,rename:rename,renameCurrent:renameCur,label:label,current:getCur};
 })();
