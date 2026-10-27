@@ -45,9 +45,10 @@ Windows.
 
 `%LOCALAPPDATA%\codabar\config.json`, or the gear on the bar. Edge, thickness,
 colours, transparency, blur, corner radius, margin, font and which widgets show.
-The bar ships as acrylic at 86%, which is roughly what Windows 11's own
-taskbar looks like; turn the opacity down for a see-through one, bearing in
-mind that then you see whatever sits behind it. Changes apply live; the file is written through a temp file so a crash mid-write
+The bar ships as acrylic at 35% over a 30px blur, close to what Windows 11's
+own taskbar looks like: the wallpaper comes through, and anything that does
+end up behind the bar reads as a smear rather than as its own title bar.
+Changes apply live; the file is written through a temp file so a crash mid-write
 cannot truncate it.
 
 ## Widgets
@@ -62,9 +63,17 @@ Start, search, task view and show desktop have no public API worth the
 trouble, so the bar taps the Win chord the user would have typed. Battery
 hides itself on a machine that has none.
 
+The bar never takes focus: `WS_EX_NOACTIVATE` keeps a click from activating
+it, so no focus ring lights up around it and the window you were in keeps the
+foreground, which is how the shell's taskbar behaves. `WS_EX_TOOLWINDOW` keeps
+it out of Alt+Tab.
+
 The window list filters the way the shell's own taskbar does -- visible,
 titled, unowned, not a tool window, and not DWM-cloaked, which is what keeps
-suspended UWP apps and phantom `ApplicationFrame` windows out. Icons come from
+suspended UWP apps and phantom `ApplicationFrame` windows out. Minimized
+windows skip the size and monitor tests: Windows parks them off-screen at
+roughly 160x31, so testing either would throw away most of what a taskbar is
+for. Icons come from
 `WM_GETICON`, then the window class, then the executable, and are cached per
 window until the process behind it changes. Click focuses, middle-click closes.
 

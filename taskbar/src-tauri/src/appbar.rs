@@ -25,8 +25,10 @@ use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::WindowsAndMessaging::SPI_SETWORKAREA;
 use windows::Win32::UI::WindowsAndMessaging::{
     FindWindowW, GetSystemMetrics, IsWindow, IsWindowVisible, SendMessageTimeoutW,
-    GetWindowRect, SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
+    GetWindowLongPtrW, GetWindowRect, SetWindowLongPtrW, SetWindowPos, ShowWindow,
+    GWL_EXSTYLE, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
     SWP_NOSENDCHANGING, SWP_NOZORDER, SW_HIDE, SW_SHOWNA, WM_SETTINGCHANGE,
+    WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
 
 pub use crate::geom::Edge;
@@ -160,6 +162,7 @@ impl AppBar {
             set_shell_visible(false);
         }
 
+        bar.make_passive();
         bar.reposition();
         // A window that was already maximized keeps the work area it was
         // maximized against, so it would sit under the strip we just took --
@@ -264,6 +267,26 @@ impl AppBar {
                 cx,
                 cy,
                 SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER,
+            );
+        }
+    }
+
+    /// Stop the window ever taking focus.
+    ///
+    /// Without this the bar activates when clicked, which lights a focus ring
+    /// around it like any other window and, worse, takes the foreground away
+    /// from whatever the user was in. The shell's own taskbar does not do
+    /// either. `WS_EX_NOACTIVATE` still delivers mouse input, so every button
+    /// keeps working; the window simply never becomes foreground.
+    ///
+    /// `WS_EX_TOOLWINDOW` alongside it keeps the bar out of Alt+Tab.
+    fn make_passive(&self) {
+        unsafe {
+            let ex = GetWindowLongPtrW(self.hwnd, GWL_EXSTYLE) as u32;
+            SetWindowLongPtrW(
+                self.hwnd,
+                GWL_EXSTYLE,
+                (ex | WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0) as isize,
             );
         }
     }

@@ -189,9 +189,14 @@ function build() {
     b.onclick = () => invoke("launch_claude").catch(() => {});
   }
 
+  // Volume, network, mic and battery sit together with no gap, as one block.
+  const cluster = document.createElement("div");
+  cluster.className = "cluster";
+  right.appendChild(cluster);
+
   if (cfg.widgets.volume) {
-    volBtn = pill(right, "volume", "Volume");
-    volBtn.classList.add("square");
+    volBtn = pill(cluster, "volume", "Volume");
+    volBtn.classList.add("compact");
     volBtn.onclick = async () => paintVolume(await invoke("toggle_speakers"));
     volBtn.onwheel = (ev) => {
       ev.preventDefault();
@@ -205,28 +210,28 @@ function build() {
   }
 
   if (cfg.widgets.wifi) {
-    netBtn = pill(right, "net", "Rede");
-    netBtn.classList.add("square");
+    netBtn = pill(cluster, "net", "Rede");
+    netBtn.classList.add("compact");
     // The quickest route to the thing you actually want when you click it.
     netBtn.onclick = () => invoke("open_network_settings").catch(() => {});
     refreshNet();
   }
 
   if (cfg.widgets.mic) {
-    micBtn = pill(right, "mic", "Microfone");
-    micBtn.classList.add("square");
+    micBtn = pill(cluster, "mic", "Microfone");
+    micBtn.classList.add("compact");
     micBtn.onclick = async () => paintMic(await invoke("toggle_mic"));
     refreshMic();
   }
 
   if (cfg.widgets.battery) {
-    batBtn = pill(right, "battery", "Bateria");
-    batBtn.classList.add("square");
+    batBtn = pill(cluster, "battery", "Bateria");
+    batBtn.classList.add("compact");
     refreshBattery();
   }
 
-  const gear = pill(right, "settings", "Ajustes do codabar");
-  gear.classList.add("square");
+  const gear = pill(cluster, "settings", "Ajustes do codabar");
+  gear.classList.add("compact");
   gear.appendChild(icon("settings"));
   gear.onclick = () => invoke("open_settings").catch(() => {});
 

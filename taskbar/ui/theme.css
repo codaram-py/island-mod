@@ -1,11 +1,11 @@
 /* Tokens the bar and the settings window share. Values are written onto
    :root by applyTheme() in common.js, from the config the backend holds. */
 :root {
-  --bg: #1c1c22;
+  --bg: #101014;
   --fg: #e8e8ee;
   --muted: #8b8b99;
   --accent: #f0be5a;
-  --opacity: 0.86;
+  --opacity: 0.35;
   --radius: 0px;
   --gap: 6px;
   --font-size: 12px;
@@ -15,6 +15,18 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* The bar is not a window anyone focuses, so nothing in it draws a focus
+   ring: WS_EX_NOACTIVATE keeps the frame from lighting up, and this keeps
+   the webview from drawing its own around whatever was clicked. */
+*:focus,
+*:focus-visible {
+  outline: none;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -41,8 +53,10 @@ body {
 }
 
 .surface.blur {
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  /* Strong enough that a window caught behind a see-through bar reads as a
+     smear rather than as its own title bar. */
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
 }
 
 button {
@@ -108,15 +122,35 @@ button {
   pointer-events: none;
 }
 
+/* The status widgets read as one block, the way the shell groups them,
+   rather than as separate 40px tiles with air between. */
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.pill.compact {
+  width: 28px;
+  height: 40px;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.pill.compact .icon {
+  width: 14px;
+  height: 14px;
+}
+
 /* The battery's fill, drawn inside the glyph rather than beside it. */
-.pill.square .bat {
+.pill .bat {
   position: absolute;
   left: 50%;
   top: 50%;
   translate: -50% -50%;
   margin-left: -1px;
-  width: 11px;
-  height: 5px;
+  width: 9px;
+  height: 4px;
   border-radius: 1px;
   background: linear-gradient(
     to right,

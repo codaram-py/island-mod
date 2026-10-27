@@ -45,11 +45,11 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Theme {
-            background: "#1c1c22".into(),
+            background: "#101014".into(),
             foreground: "#e8e8ee".into(),
             muted: "#8b8b99".into(),
             accent: "#f0be5a".into(),
-            opacity: 0.86,
+            opacity: 0.35,
             blur: true,
             radius: 0,
             font_family: "Segoe UI Variable, Segoe UI, system-ui, sans-serif".into(),

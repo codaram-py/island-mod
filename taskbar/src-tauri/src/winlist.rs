@@ -100,6 +100,12 @@ unsafe fn is_app_window(hwnd: HWND, own_pid: u32) -> bool {
     if ok.is_ok() && cloaked != 0 {
         return false;
     }
+    // A minimized window is parked off-screen at a token size -- around
+    // 160x31 at (-32000, -32000) -- so the size test below would throw away
+    // every one of them, which is most of what a taskbar is for.
+    if IsIconic(hwnd).as_bool() {
+        return true;
+    }
     // Degenerate rectangles: helper windows parked at 0x0 or a single pixel.
     let mut rect = windows::Win32::Foundation::RECT::default();
     if GetWindowRect(hwnd, &mut rect).is_err() {
@@ -154,7 +160,9 @@ unsafe fn exe_of(hwnd: HWND) -> String {
 /// `WM_GETICON` goes through `SendMessageTimeout`: a hung app must not hang the
 /// bar with it.
 unsafe fn icon_handle(hwnd: HWND, exe: &str) -> Option<(HICON, bool)> {
-    for kind in [ICON_SMALL2, ICON_BIG] {
+    // Biggest first: these are drawn at 20 CSS px, and upscaling a 16x16 is
+    // what left them looking washed out next to the shell's own.
+    for kind in [ICON_BIG, ICON_SMALL2] {
         let mut res: usize = 0;
         let _ = SendMessageTimeoutW(
             hwnd,
@@ -169,7 +177,7 @@ unsafe fn icon_handle(hwnd: HWND, exe: &str) -> Option<(HICON, bool)> {
             return Some((HICON(res as *mut _), false));
         }
     }
-    for which in [GCLP_HICONSM, GCLP_HICON] {
+    for which in [GCLP_HICON, GCLP_HICONSM] {
         let h = GetClassLongPtrW(hwnd, which);
         if h != 0 {
             return Some((HICON(h as *mut _), false));
@@ -177,17 +185,27 @@ unsafe fn icon_handle(hwnd: HWND, exe: &str) -> Option<(HICON, bool)> {
     }
     if !exe.is_empty() {
         let wide: Vec<u16> = exe.encode_utf16().chain(std::iter::once(0)).collect();
+        // Large then small, for the same reason as above.
+        let mut large = [HICON::default(); 1];
         let mut small = [HICON::default(); 1];
         let n = windows::Win32::UI::Shell::ExtractIconExW(
             windows::core::PCWSTR(wide.as_ptr()),
             0,
-            None,
+            Some(large.as_mut_ptr()),
             Some(small.as_mut_ptr()),
             1,
         );
-        if n > 0 && !small[0].is_invalid() {
-            // Ours to destroy, unlike the two above which belong to the window.
-            return Some((small[0], true));
+        if n > 0 {
+            if !large[0].is_invalid() {
+                if !small[0].is_invalid() {
+                    let _ = DestroyIcon(small[0]);
+                }
+                // Ours to destroy, unlike the two above which belong to the window.
+                return Some((large[0], true));
+            }
+            if !small[0].is_invalid() {
+                return Some((small[0], true));
+            }
         }
     }
     None
@@ -351,7 +369,11 @@ pub fn list(monitor: HMONITOR, skip: HWND, max: usize) -> Vec<WindowInfo> {
             if !is_app_window(hwnd, own_pid) {
                 continue;
             }
+            // Off-screen at -32000, a minimized window's monitor is whatever
+            // MonitorFromWindow falls back to, which is not where it will
+            // reappear. Scoping only applies to windows actually on a screen.
             if !monitor.is_invalid()
+                && !IsIconic(hwnd).as_bool()
                 && MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY) != monitor
             {
                 continue;
