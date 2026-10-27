@@ -230,9 +230,9 @@ impl AppBar {
         if !self.registered {
             return;
         }
+        let want = self.desired();
         let mut abd = self.data();
-        let wanted = self.desired();
-        abd.rc = wanted;
+        abd.rc = want;
 
         if !self.replace_shell {
             unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
@@ -245,12 +245,13 @@ impl AppBar {
             }
         }
 
-        // SETPOS writes the approved rectangle back into abd.rc, and it is
-        // subject to the same reservations QUERYPOS is -- the hidden shell
-        // taskbar's among them. So while we are replacing that taskbar the
-        // window goes where we asked, not where the answer came back.
+        // SETPOS writes the approved rectangle back into abd.rc, and that
+        // answer is subject to the same reservations QUERYPOS is -- the hidden
+        // shell taskbar's among them, which can shrink ours to nothing. So
+        // while we are replacing that taskbar the window goes where we asked,
+        // not where the answer came back.
         unsafe { SHAppBarMessage(ABM_SETPOS, &mut abd) };
-        let placed = if self.replace_shell { wanted } else { abd.rc };
+        let placed = if self.replace_shell { want } else { abd.rc };
 
         let (x, y) = (placed.left, placed.top);
         let (cx, cy) = (placed.right - placed.left, placed.bottom - placed.top);
