@@ -6,71 +6,78 @@
     <link rel="stylesheet" href="theme.css" />
     <style>
       body {
-        padding: var(--margin, 0px);
+        padding: var(--margin);
       }
+      /* The centre row is centred on the screen, and the right-hand side is
+         lifted out of the flow so it stays pinned to the corner however many
+         windows are open -- otherwise a full centre would push it off. */
       .bar {
+        position: relative;
         display: flex;
         align-items: center;
-        height: 100%;
-        padding: 0 8px;
-        gap: var(--gap);
-      }
-      .zone {
-        display: flex;
-        align-items: center;
-        gap: var(--gap);
-        min-width: 0;
-      }
-      .zone.center {
-        flex: 1;
         justify-content: center;
+        height: 100%;
       }
-      .zone.right {
-        margin-left: auto;
+      #center {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
       }
-      #clock {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0;
-        line-height: 1.15;
-        font-variant-numeric: tabular-nums;
+      #right {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding-right: 12px;
       }
-      #clock .date {
-        font-size: 0.82em;
-        color: var(--muted);
+      #apps {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
       }
-      .hidden {
-        display: none !important;
-      }
-      /* Left/right edges: the bar runs down the screen instead of across. */
+
+      /* Left or right edge: the bar runs down the screen, so the centre
+         stacks and the right-hand side sits at the bottom instead. */
       body.vertical .bar {
         flex-direction: column;
+        justify-content: flex-start;
         padding: 8px 0;
       }
-      body.vertical .zone {
+      body.vertical #center,
+      body.vertical #apps,
+      body.vertical #right {
         flex-direction: column;
       }
-      body.vertical .zone.right {
-        margin-left: 0;
+      body.vertical #right {
+        position: static;
         margin-top: auto;
-      }
-      body.vertical .pill {
         height: auto;
-        min-height: 32px;
-        padding: 6px 4px;
-        justify-content: center;
+        padding: 0 0 8px;
+      }
+      body.vertical .rule {
+        width: 24px;
+        height: 1px;
+        margin: 4px 0;
       }
       body.vertical #clock {
         align-items: center;
-        font-size: 0.9em;
+      }
+      body.vertical .sliver {
+        width: 100%;
+        height: 5px;
+        top: auto;
+        bottom: 0;
       }
     </style>
   </head>
   <body>
     <div class="bar surface">
-      <div class="zone left" id="left"></div>
-      <div class="zone center" id="center"></div>
-      <div class="zone right" id="right"></div>
+      <div id="center"></div>
+      <div id="right"></div>
+      <button class="sliver" id="showdesktop" title="Mostrar a área de trabalho"></button>
     </div>
     <script type="module" src="bar.js"></script>
   </body>

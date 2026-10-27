@@ -32,6 +32,7 @@ windows = { version = "0.58", features = [
   "Win32_NetworkManagement_WiFi",
   "Win32_Networking_NetworkListManager",
   "Win32_System_Power",
+  "Win32_Globalization",
 ] }
 
 [profile.release]

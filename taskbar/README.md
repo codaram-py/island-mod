@@ -45,19 +45,32 @@ Windows.
 
 `%LOCALAPPDATA%\codabar\config.json`, or the gear on the bar. Edge, thickness,
 colours, transparency, blur, corner radius, margin, font and which widgets show.
-The bar ships as acrylic at 35% over a 30px blur, close to what Windows 11's
-own taskbar looks like: the wallpaper comes through, and anything that does
-end up behind the bar reads as a smear rather than as its own title bar.
-Changes apply live; the file is written through a temp file so a crash mid-write
+The defaults follow `design-ref/Main.dc.html`: rgba(32,32,32,0.92) over a
+20px blur, 52px thick, 44px tiles at 6px radius. Changes apply live; the file is written through a temp file so a crash mid-write
 cannot truncate it.
+
+## The look
+
+`design-ref/Main.dc.html` is the reference. The centre row is centred on the
+screen and the right-hand side is lifted out of the flow so it stays pinned to
+the corner however many windows are open -- a full centre would otherwise push
+it off. Measured against the reference with a headless render: bar 1920x52,
+tiles 44x44 at 6px with a 4px gap, right side gapped 2px with 12px of padding,
+1x24 rules, 5x52 show-desktop strip.
 
 ## Widgets
 
 Working: Start, search, task view, the open windows on the bar's monitor,
 volume (click mutes, wheel adjusts), network (wi-fi SSID and signal from the
 WLAN service, falling back to the network list manager for a wired link),
-microphone mute, battery, clock, show desktop, the Claude Code button,
-settings.
+microphone mute, battery, the keyboard language indicator, clock, show
+desktop, the Claude Code button, settings.
+
+The language indicator reads the foreground thread's layout. The top line is
+the first three letters of the language's English name, which is what Windows
+shows -- POR for Portuguese, not the PTB the locale abbreviation would give.
+The bottom line is that abbreviation plus the layout variant from the KLID's
+high half, so Brazilian ABNT2 comes out as PTB2.
 
 Start, search, task view and show desktop have no public API worth the
 trouble, so the bar taps the Win chord the user would have typed. Battery
@@ -80,7 +93,9 @@ window until the process behind it changes. Click focuses, middle-click closes.
 Not yet: the shell's notification area, VPN, music, per-app mixer. They appear
 greyed out in the settings rather than as widgets that do nothing.
 
-The background-apps tray is the hard one. Tray icons belong to the shell: apps
+The tray's toggle and slots are left out of the bar entirely rather than drawn
+empty, so the reference's four mini icons are the one part of the right-hand
+side that is missing. It is the hard one. Tray icons belong to the shell: apps
 call `Shell_NotifyIcon`, which finds `Shell_TrayWnd` and sends `WM_COPYDATA` to
 Explorer. Becoming the tray server breaks Explorer's own tray and loses every
 icon registered before we started, so the plan is to mirror instead — read the

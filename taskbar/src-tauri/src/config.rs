@@ -45,11 +45,11 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Theme {
-            background: "#101014".into(),
+            background: "#202020".into(),
             foreground: "#e8e8ee".into(),
             muted: "#8b8b99".into(),
             accent: "#f0be5a".into(),
-            opacity: 0.35,
+            opacity: 0.92,
             blur: true,
             radius: 0,
             font_family: "Segoe UI Variable, Segoe UI, system-ui, sans-serif".into(),
@@ -87,6 +87,8 @@ pub struct Widgets {
     pub battery: bool,
     /// The sliver at the far end that minimises everything.
     pub show_desktop: bool,
+    /// The keyboard language indicator, two lines as the shell draws it.
+    pub language: bool,
 }
 
 impl Default for Widgets {
@@ -109,6 +111,7 @@ impl Default for Widgets {
             volume: true,
             battery: true,
             show_desktop: true,
+            language: true,
         }
     }
 }
@@ -130,7 +133,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             edge: "bottom".into(),
-            thickness: 48,
+            thickness: 52,
             replace_shell: true,
             theme: Theme::default(),
             widgets: Widgets::default(),

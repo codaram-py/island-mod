@@ -31,6 +31,7 @@ const FIELDS = {
   volume: ["widgets", "volume"],
   battery: ["widgets", "battery"],
   showDesktop: ["widgets", "showDesktop"],
+  language: ["widgets", "language"],
   mixer: ["widgets", "mixer"],
   tray: ["widgets", "tray"],
   vpn: ["widgets", "vpn"],

@@ -6,6 +6,8 @@ mod geom;
 mod audio;
 mod config;
 #[cfg(windows)]
+mod kbd;
+#[cfg(windows)]
 mod power;
 #[cfg(windows)]
 mod net;
@@ -234,6 +236,28 @@ fn toggle_speakers() -> Option<audio::Volume> {
     }
 }
 
+/// Open the Windows language picker, as clicking the shell's indicator does.
+#[tauri::command]
+fn cycle_layout() -> Result<(), String> {
+    #[cfg(windows)]
+    tap_win(Some(
+        windows::Win32::UI::Input::KeyboardAndMouse::VK_SPACE.0,
+    ));
+    Ok(())
+}
+
+#[tauri::command]
+fn keyboard_layout() -> Option<kbd::Layout> {
+    #[cfg(windows)]
+    {
+        kbd::current()
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
+}
+
 #[tauri::command]
 fn battery() -> Option<power::Battery> {
     #[cfg(windows)]
@@ -411,6 +435,8 @@ fn main() {
             set_volume,
             toggle_speakers,
             battery,
+            keyboard_layout,
+            cycle_layout,
             net_status,
             open_network_settings,
             list_windows,

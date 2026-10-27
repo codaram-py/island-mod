@@ -1,16 +1,20 @@
 /* Tokens the bar and the settings window share. Values are written onto
-   :root by applyTheme() in common.js, from the config the backend holds. */
+   :root by applyTheme() in common.js, from the config the backend holds.
+   The defaults here match design-ref/Main.dc.html. */
 :root {
-  --bg: #101014;
-  --fg: #e8e8ee;
-  --muted: #8b8b99;
-  --accent: #f0be5a;
-  --opacity: 0.35;
+  --bg: #202020;
+  --fg: #ffffff;
+  --muted: #cccccc;
+  --dim: #999999;
+  --accent: #0078d4;
+  --opacity: 0.92;
   --radius: 0px;
-  --gap: 6px;
+  --gap: 4px;
   --font-size: 12px;
-  --font: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --pill: 2px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --margin: 0px;
+  --hover: rgba(255, 255, 255, 0.08);
+  --rule: rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -23,10 +27,6 @@
 *:focus,
 *:focus-visible {
   outline: none;
-}
-
-button {
-  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -42,9 +42,16 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  /* Only earns its keep once the opacity is turned down far enough for the
-     wallpaper to come through. */
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .surface {
@@ -53,168 +60,180 @@ body {
 }
 
 .surface.blur {
-  /* Strong enough that a window caught behind a see-through bar reads as a
-     smear rather than as its own title bar. */
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  cursor: default;
-}
+/* ---- the centre strip ---------------------------------------------------- */
 
-.pill {
+/* Start and every app share one tile size, so the row reads as a single rank
+   however many windows are open. */
+.tile {
+  width: 44px;
+  height: 44px;
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: var(--pill);
-  white-space: nowrap;
-  transition: background-color 0.12s ease, color 0.12s ease;
-}
-
-/* Icon-only buttons: a fixed square, same width across the row — like the
-   Windows taskbar's app slots. */
-.pill.square {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border-radius: 4px;
   justify-content: center;
-  flex: none;
+  border-radius: 6px;
+  transition: background-color 0.12s ease;
 }
 
-/* The focused window gets the short underline Windows 11 uses. Other open
-   windows get a shorter, dimmer one, so you can tell open from merely pinned. */
-.pill.square.open::after,
-.pill.square.active::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  translate: -50% 0;
-  height: 3px;
-  border-radius: 2px;
-  background: currentColor;
-  transition: width 0.15s ease, opacity 0.15s ease;
+.tile:hover {
+  background: var(--hover);
 }
 
-.pill.square.open::after {
-  width: 6px;
-  opacity: 0.45;
+.tile:active {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-.pill.square.active::after {
-  width: 16px;
-  opacity: 1;
-  background: var(--accent);
-}
-
-.pill.square img {
-  width: 20px;
-  height: 20px;
+.tile img {
+  width: 22px;
+  height: 22px;
   pointer-events: none;
-}
-
-/* The status widgets read as one block, the way the shell groups them,
-   rather than as separate 40px tiles with air between. */
-.cluster {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.pill.compact {
-  width: 28px;
-  height: 40px;
-  padding: 0 2px;
-  border-radius: 4px;
-}
-
-.pill.compact .icon {
-  width: 14px;
-  height: 14px;
-}
-
-/* The battery's fill, drawn inside the glyph rather than beside it. */
-.pill .bat {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  margin-left: -1px;
-  width: 9px;
-  height: 4px;
-  border-radius: 1px;
-  background: linear-gradient(
-    to right,
-    currentColor 0 var(--pct),
-    transparent var(--pct) 100%
-  );
-  pointer-events: none;
-}
-
-/* Show-desktop: the thin strip at the very end of the bar, as the shell has
-   it. No icon, just a hairline and a hit target. */
-.sliver {
-  width: 10px;
-  flex: none;
-  align-self: stretch;
-  margin-left: 2px;
-  border-left: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
-  background: none;
-  cursor: default;
-}
-
-.sliver:hover {
-  background: color-mix(in srgb, var(--fg) 12%, transparent);
 }
 
 /* Stand-in for a window whose icon could not be read. */
-.pill.square .initial {
-  font-size: 15px;
+.tile .initial {
+  font-size: 16px;
   font-weight: 600;
   line-height: 1;
-  opacity: 0.85;
+  color: var(--muted);
   pointer-events: none;
 }
 
-.pill:hover {
-  background: color-mix(in srgb, var(--fg) 10%, transparent);
-}
+/* ---- the right-hand side ------------------------------------------------- */
 
-.pill:active {
-  background: color-mix(in srgb, var(--fg) 16%, transparent);
-  transform: translateY(0.5px);
-}
-
-.pill.on {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
-  color: var(--accent);
-}
-
-.pill.alert {
-  background: color-mix(in srgb, #ff5a52 24%, transparent);
-  color: #ff8d86;
-}
-
-.icon {
-  width: 16px;
-  height: 16px;
+.tray-toggle {
+  width: 28px;
+  height: 40px;
   flex: none;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
-.muted {
+.tray-toggle:hover,
+.tray-slot:hover,
+.group:hover {
+  background: var(--hover);
+}
+
+.tray {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 4px;
+}
+
+.tray-slot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.tray-slot img {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.rule {
+  width: 1px;
+  height: 24px;
+  flex: none;
+  background: var(--rule);
+  margin: 0 4px;
+}
+
+/* Language, status icons and the clock are each one hit target with the same
+   padding, which is what gives the right side its even rhythm. */
+.group {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.12s ease;
+}
+
+#language {
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+#language .lang {
+  font-size: 10px;
+  font-weight: 600;
   color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+#language .klid {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.3px;
+}
+
+#status {
+  gap: 4px;
+  color: var(--muted);
+}
+
+/* Audio over mic, wi-fi over bluetooth: two glyphs in the width of one. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+#clock {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+#clock .time {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+#clock .date {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* A muted control is still legible, but reads as off. */
+.alert {
+  color: #ff6b6b;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- show desktop -------------------------------------------------------- */
+
+/* A fixed strip in the very corner, outside the bar's own flow. */
+.sliver {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sliver:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
