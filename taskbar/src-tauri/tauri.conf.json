@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "codabar",
+  "version": "0.1.0",
+  "identifier": "dev.codaram.codabar",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "bar",
+        "title": "codabar",
+        "width": 1920,
+        "height": 40,
+        "x": 0,
+        "y": 0,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "resizable": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": true,
+        "focus": false,
+        "visible": false
+      },
+      {
+        "label": "settings",
+        "title": "codabar — ajustes",
+        "url": "settings.html",
+        "width": 520,
+        "height": 680,
+        "resizable": true,
+        "decorations": true,
+        "visible": false,
+        "skipTaskbar": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}

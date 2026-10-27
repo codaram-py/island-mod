@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>codabar — ajustes</title>
+    <link rel="stylesheet" href="theme.css" />
+    <style>
+      body {
+        background: #101014;
+        overflow-y: auto;
+        padding: 18px;
+        font-size: 13px;
+      }
+      h2 {
+        margin: 22px 0 10px;
+        font-size: 11px;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      h2:first-child {
+        margin-top: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 7px 0;
+      }
+      .row label {
+        flex: 1;
+        min-width: 0;
+      }
+      .row .hint {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      input[type="text"],
+      select {
+        width: 180px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        border: 1px solid #2a2a33;
+        background: #1a1a21;
+        color: var(--fg);
+        font: inherit;
+      }
+      input[type="color"] {
+        width: 44px;
+        height: 28px;
+        padding: 2px;
+        border: 1px solid #2a2a33;
+        border-radius: 6px;
+        background: #1a1a21;
+      }
+      input[type="range"] {
+        width: 180px;
+        accent-color: var(--accent);
+      }
+      input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--accent);
+      }
+      .val {
+        width: 42px;
+        text-align: right;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .soon {
+        opacity: 0.45;
+      }
+      footer {
+        margin-top: 24px;
+        display: flex;
+        gap: 10px;
+      }
+      footer button {
+        padding: 7px 14px;
+        border-radius: 7px;
+        background: #1f1f28;
+        cursor: pointer;
+      }
+      footer button:hover {
+        background: #2a2a36;
+      }
+      #status {
+        margin-left: auto;
+        align-self: center;
+        color: var(--muted);
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Posição</h2>
+    <div class="row">
+      <label for="edge">Borda da tela</label>
+      <select id="edge">
+        <option value="bottom">Embaixo</option>
+        <option value="top">Em cima</option>
+        <option value="left">Esquerda</option>
+        <option value="right">Direita</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="thickness">Espessura</label>
+      <input type="range" id="thickness" min="20" max="200" />
+      <span class="val" id="thicknessVal"></span>
+    </div>
+    <div class="row">
+      <label for="replaceShell">
+        Substituir a barra do Windows
+        <span class="hint">Desligado, a barra original continua e o codabar só reserva o espaço.</span>
+      </label>
+      <input type="checkbox" id="replaceShell" />
+    </div>
+
+    <h2>Tema</h2>
+    <div class="row">
+      <label for="background">Fundo</label>
+      <input type="color" id="background" />
+    </div>
+    <div class="row">
+      <label for="foreground">Texto</label>
+      <input type="color" id="foreground" />
+    </div>
+    <div class="row">
+      <label for="muted">Texto secundário</label>
+      <input type="color" id="muted" />
+    </div>
+    <div class="row">
+      <label for="accent">Destaque</label>
+      <input type="color" id="accent" />
+    </div>
+    <div class="row">
+      <label for="opacity">Transparência</label>
+      <input type="range" id="opacity" min="15" max="100" />
+      <span class="val" id="opacityVal"></span>
+    </div>
+    <div class="row">
+      <label for="blur">Desfoque atrás</label>
+      <input type="checkbox" id="blur" />
+    </div>
+    <div class="row">
+      <label for="radius">Cantos</label>
+      <input type="range" id="radius" min="0" max="40" />
+      <span class="val" id="radiusVal"></span>
+    </div>
+    <div class="row">
+      <label for="margin">Afastar da borda</label>
+      <input type="range" id="margin" min="0" max="40" />
+      <span class="val" id="marginVal"></span>
+    </div>
+    <div class="row">
+      <label for="gap">Espaço entre widgets</label>
+      <input type="range" id="gap" min="0" max="40" />
+      <span class="val" id="gapVal"></span>
+    </div>
+    <div class="row">
+      <label for="fontSize">Tamanho da fonte</label>
+      <input type="range" id="fontSize" min="8" max="32" />
+      <span class="val" id="fontSizeVal"></span>
+    </div>
+    <div class="row">
+      <label for="fontFamily">Fonte</label>
+      <input type="text" id="fontFamily" />
+    </div>
+
+    <h2>Widgets</h2>
+    <div class="row">
+      <label for="clock">Relógio</label>
+      <input type="checkbox" id="clock" />
+    </div>
+    <div class="row">
+      <label for="clockSeconds">Mostrar segundos</label>
+      <input type="checkbox" id="clockSeconds" />
+    </div>
+    <div class="row">
+      <label for="search">Pesquisar</label>
+      <input type="checkbox" id="search" />
+    </div>
+    <div class="row">
+      <label for="taskView">Visão de tarefas</label>
+      <input type="checkbox" id="taskView" />
+    </div>
+    <div class="row">
+      <label for="volume">Volume</label>
+      <input type="checkbox" id="volume" />
+    </div>
+    <div class="row">
+      <label for="battery">Bateria <span class="hint">some sozinha em desktop</span></label>
+      <input type="checkbox" id="battery" />
+    </div>
+    <div class="row">
+      <label for="showDesktop">Mostrar área de trabalho</label>
+      <input type="checkbox" id="showDesktop" />
+    </div>
+    <div class="row">
+      <label for="language">Idioma do teclado</label>
+      <input type="checkbox" id="language" />
+    </div>
+    <div class="row">
+      <label for="wifi">Rede</label>
+      <input type="checkbox" id="wifi" />
+    </div>
+    <div class="row">
+      <label for="mic">Microfone</label>
+      <input type="checkbox" id="mic" />
+    </div>
+    <div class="row">
+      <label for="apps">
+        Janelas abertas
+        <span class="hint">Só as do monitor onde a barra está.</span>
+      </label>
+      <input type="checkbox" id="apps" />
+    </div>
+    <div class="row">
+      <label for="appsMax">Máximo de janelas</label>
+      <input type="range" id="appsMax" min="1" max="40" />
+      <span class="val" id="appsMaxVal"></span>
+    </div>
+    <div class="row">
+      <label for="claude">Botão do Claude Code</label>
+      <input type="checkbox" id="claude" />
+    </div>
+    <div class="row">
+      <label for="claudeCommand">Comando do Claude</label>
+      <input type="text" id="claudeCommand" />
+    </div>
+    <div class="row soon">
+      <label for="tray">Apps em segundo plano <span class="hint">ainda não implementado</span></label>
+      <input type="checkbox" id="tray" disabled />
+    </div>
+    <div class="row soon">
+      <label for="vpn">VPN <span class="hint">ainda não implementado</span></label>
+      <input type="checkbox" id="vpn" disabled />
+    </div>
+    <div class="row soon">
+      <label for="media">Música <span class="hint">ainda não implementado</span></label>
+      <input type="checkbox" id="media" disabled />
+    </div>
+
+    <footer>
+      <button id="reset">Restaurar padrão</button>
+      <span id="status"></span>
+    </footer>
+
+    <script type="module" src="settings.js"></script>
+  </body>
+</html>

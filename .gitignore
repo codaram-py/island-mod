@@ -1,0 +1,5 @@
+island_backup.exe
+fin_*.js
+__pycache__/
+target/
+taskbar/src-tauri/gen/

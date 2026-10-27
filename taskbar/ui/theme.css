@@ -1,0 +1,239 @@
+/* Tokens the bar and the settings window share. Values are written onto
+   :root by applyTheme() in common.js, from the config the backend holds.
+   The defaults here match design-ref/Main.dc.html. */
+:root {
+  --bg: #202020;
+  --fg: #ffffff;
+  --muted: #cccccc;
+  --dim: #999999;
+  --accent: #0078d4;
+  --opacity: 0.92;
+  --radius: 0px;
+  --gap: 4px;
+  --font-size: 12px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --margin: 0px;
+  --hover: rgba(255, 255, 255, 0.08);
+  --rule: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The bar is not a window anyone focuses, so nothing in it draws a focus
+   ring: WS_EX_NOACTIVATE keeps the frame from lighting up, and this keeps
+   the webview from drawing its own around whatever was clicked. */
+*:focus,
+*:focus-visible {
+  outline: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font);
+  font-size: var(--font-size);
+  color: var(--fg);
+  /* The bar window is transparent; anything opaque is painted by .surface. */
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.surface {
+  background: color-mix(in srgb, var(--bg) calc(var(--opacity) * 100%), transparent);
+  border-radius: var(--radius);
+}
+
+.surface.blur {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ---- the centre strip ---------------------------------------------------- */
+
+/* Start and every app share one tile size, so the row reads as a single rank
+   however many windows are open. */
+.tile {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.12s ease;
+}
+
+.tile:hover {
+  background: var(--hover);
+}
+
+.tile:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.tile img {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+/* Stand-in for a window whose icon could not be read. */
+.tile .initial {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ---- the right-hand side ------------------------------------------------- */
+
+.tray-toggle {
+  width: 28px;
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.tray-toggle:hover,
+.tray-slot:hover,
+.group:hover {
+  background: var(--hover);
+}
+
+.tray {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 4px;
+}
+
+.tray-slot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.tray-slot img {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.rule {
+  width: 1px;
+  height: 24px;
+  flex: none;
+  background: var(--rule);
+  margin: 0 4px;
+}
+
+/* Language, status icons and the clock are each one hit target with the same
+   padding, which is what gives the right side its even rhythm. */
+.group {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.12s ease;
+}
+
+#language {
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+#language .lang {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+#language .klid {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.3px;
+}
+
+#status {
+  gap: 4px;
+  color: var(--muted);
+}
+
+/* Audio over mic, wi-fi over bluetooth: two glyphs in the width of one. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+#clock {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+#clock .time {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+#clock .date {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* A muted control is still legible, but reads as off. */
+.alert {
+  color: #ff6b6b;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- show desktop -------------------------------------------------------- */
+
+/* A fixed strip in the very corner, outside the bar's own flow. */
+.sliver {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sliver:hover {
+  background: rgba(255, 255, 255, 0.28);
+}

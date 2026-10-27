@@ -1,10 +1,11 @@
-import brotli, json, sys, os
+import brotli, json, subprocess, sys, os
 sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from extract import extract
+from chat_tab_patch import ISLAND, patch_chat_tab
 
-BAK = r'C:\Users\fdsmu\AppData\Local\Island\island_backup.exe'
-EXE = r'C:\Users\fdsmu\AppData\Local\Island\island.exe'
+BAK = os.environ.get('ISLAND_BAK', r'C:\Users\fdsmu\AppData\Local\Island\island_backup.exe')
+EXE = os.environ.get('ISLAND_EXE', r'C:\Users\fdsmu\AppData\Local\Island\island.exe')
 BT = chr(96)
 
 with open(BAK, 'rb') as f:
@@ -22,6 +23,11 @@ for p, i in assets.items():
 LR = '/assets/LangRoot-B1oi2SO4.js'
 ST = '/assets/settings-TI-OGeDC.js'
 LQ = '/assets/Liquid-IWWYSV_r.js'
+
+# ---- chat session history: prefix the session store, rewrite the chat tab chrome ----
+# must run before `own` below, so the new c(ru,en) call sites make it into the pt map
+SRC[ISLAND] = patch_chat_tab(SRC[ISLAND])
+print("chat session history injected into island.js")
 
 # ---- own static translations per module ----
 own = {}
@@ -205,8 +211,18 @@ for p in SRC:
     name = p.split('/')[-1]
     print(f"{name:40s} {len(b):7d} / {cap:7d}  pad {cap - len(b):6d}  map {len(final[p]):4d}")
     assert len(b) <= cap, f"{name} OVERFLOW by {len(b) - cap}"
+    assert brotli.decompress(b).decode('utf-8') == out, f"{name} roundtrip mismatch"
     blobs[p] = b
     open('fin_' + name, 'w', encoding='utf-8').write(out)
+
+# ---- syntax-check every javascript module we rewrote ----
+for p in SRC:
+    name = p.split('/')[-1]
+    if not name.endswith('.js'):
+        continue
+    r = subprocess.run(['node', '--check', 'fin_' + name], capture_output=True, text=True)
+    assert r.returncode == 0, f"node --check failed for {name}:\n{r.stderr}"
+print(f"node --check passed for {sum(1 for p in SRC if p.endswith('.js'))} modules")
 
 # ---- write binary ----
 exe = bytearray(data)
@@ -226,5 +242,6 @@ for m in final.values():
     placed |= set(m)
 print(f"total distinct translations placed: {len(placed)}")
 
+os.makedirs(os.path.dirname(os.path.abspath(EXE)), exist_ok=True)
 open(EXE, 'wb').write(bytes(exe))
-print(f"WRITTEN {len(exe)} bytes")
+print(f"WRITTEN {EXE} ({len(exe)} bytes)")
