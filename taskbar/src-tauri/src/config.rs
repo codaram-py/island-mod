@@ -45,12 +45,12 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         Theme {
-            background: "#14141a".into(),
+            background: "#1c1c22".into(),
             foreground: "#e8e8ee".into(),
             muted: "#8b8b99".into(),
             accent: "#f0be5a".into(),
-            opacity: 0.0,
-            blur: false,
+            opacity: 0.86,
+            blur: true,
             radius: 0,
             font_family: "Segoe UI Variable, Segoe UI, system-ui, sans-serif".into(),
             font_size: 12,
@@ -81,6 +81,12 @@ pub struct Widgets {
     /// Ceiling on how many are drawn, so a desktop full of windows cannot
     /// push the clock off the bar.
     pub apps_max: usize,
+    pub search: bool,
+    pub task_view: bool,
+    pub volume: bool,
+    pub battery: bool,
+    /// The sliver at the far end that minimises everything.
+    pub show_desktop: bool,
 }
 
 impl Default for Widgets {
@@ -98,6 +104,11 @@ impl Default for Widgets {
             claude_command: "claude".into(),
             apps: true,
             apps_max: 20,
+            search: true,
+            task_view: true,
+            volume: true,
+            battery: true,
+            show_desktop: true,
         }
     }
 }
@@ -119,7 +130,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             edge: "bottom".into(),
-            thickness: 40,
+            thickness: 48,
             replace_shell: true,
             theme: Theme::default(),
             widgets: Widgets::default(),

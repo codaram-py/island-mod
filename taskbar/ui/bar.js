@@ -64,6 +64,58 @@ async function refreshNet() {
   paintNet(await invoke("net_status").catch(() => null));
 }
 
+// ---- volume ----------------------------------------------------------------
+// Click mutes, wheel nudges the level: the two things the shell's own icon
+// does without opening its flyout.
+let volBtn = null;
+
+function volIcon(v) {
+  if (v.muted) return "volMute";
+  return v.level >= 60 ? "vol2" : v.level >= 15 ? "vol1" : "vol0";
+}
+
+function paintVolume(v) {
+  if (!volBtn) return;
+  volBtn.classList.toggle("hidden", !v);
+  if (!v) return;
+  volBtn.replaceChildren(icon(volIcon(v)));
+  volBtn.classList.toggle("alert", v.muted);
+  volBtn.title = v.muted ? "Som mudo — clique para ativar" : "Volume " + v.level + "% — roda para ajustar";
+  volBtn.dataset.level = String(v.level);
+}
+
+async function refreshVolume() {
+  if (!volBtn) return;
+  paintVolume(await invoke("volume").catch(() => null));
+}
+
+// ---- battery ---------------------------------------------------------------
+let batBtn = null;
+
+function paintBattery(b) {
+  if (!batBtn) return;
+  // A desktop has none, and a widget that never says anything is just noise.
+  batBtn.classList.toggle("hidden", !b);
+  if (!b) return;
+  const fill = document.createElement("span");
+  fill.className = "bat";
+  fill.style.setProperty("--pct", b.percent + "%");
+  const glyph = icon(b.charging ? "bolt" : "battery");
+  batBtn.replaceChildren(glyph, fill);
+  batBtn.classList.toggle("alert", b.percent <= 15 && !b.charging);
+  const hours = b.secondsLeft ? Math.floor(b.secondsLeft / 3600) : null;
+  const mins = b.secondsLeft ? Math.round((b.secondsLeft % 3600) / 60) : null;
+  batBtn.title =
+    b.percent +
+    "%" +
+    (b.charging ? " · carregando" : hours !== null ? ` · ${hours}h${String(mins).padStart(2, "0")} restantes` : "");
+}
+
+async function refreshBattery() {
+  if (!batBtn) return;
+  paintBattery(await invoke("battery").catch(() => null));
+}
+
 // ---- clock -----------------------------------------------------------------
 let clockEl = null;
 
@@ -98,6 +150,8 @@ function build() {
   right.replaceChildren();
   micBtn = null;
   netBtn = null;
+  volBtn = null;
+  batBtn = null;
   clockEl = null;
 
   // ---- center: Start + apps ------------------------------------------------
@@ -105,6 +159,20 @@ function build() {
   start.classList.add("square");
   start.appendChild(icon("start"));
   start.onclick = () => invoke("open_start_menu").catch(() => {});
+
+  if (cfg.widgets.search) {
+    const b = pill(center, "search", "Pesquisar");
+    b.classList.add("square");
+    b.appendChild(icon("search"));
+    b.onclick = () => invoke("open_search").catch(() => {});
+  }
+
+  if (cfg.widgets.taskView) {
+    const b = pill(center, "taskview", "Visão de tarefas");
+    b.classList.add("square");
+    b.appendChild(icon("taskView"));
+    b.onclick = () => invoke("open_task_view").catch(() => {});
+  }
   // The apps list (populated by a later refresh) sits right after Start,
   // in the same centre strip, so Start/apps read as one unit.
   const appsHost = document.createElement("div");
@@ -119,6 +187,21 @@ function build() {
     b.classList.add("square");
     b.appendChild(icon("terminal"));
     b.onclick = () => invoke("launch_claude").catch(() => {});
+  }
+
+  if (cfg.widgets.volume) {
+    volBtn = pill(right, "volume", "Volume");
+    volBtn.classList.add("square");
+    volBtn.onclick = async () => paintVolume(await invoke("toggle_speakers"));
+    volBtn.onwheel = (ev) => {
+      ev.preventDefault();
+      const now = Number(volBtn.dataset.level || 0);
+      const next = Math.max(0, Math.min(100, now + (ev.deltaY < 0 ? 4 : -4)));
+      if (next === now) return;
+      volBtn.dataset.level = String(next);
+      invoke("set_volume", { level: next }).then(paintVolume).catch(() => {});
+    };
+    refreshVolume();
   }
 
   if (cfg.widgets.wifi) {
@@ -136,6 +219,12 @@ function build() {
     refreshMic();
   }
 
+  if (cfg.widgets.battery) {
+    batBtn = pill(right, "battery", "Bateria");
+    batBtn.classList.add("square");
+    refreshBattery();
+  }
+
   const gear = pill(right, "settings", "Ajustes do codabar");
   gear.classList.add("square");
   gear.appendChild(icon("settings"));
@@ -144,6 +233,13 @@ function build() {
   if (cfg.widgets.clock) {
     clockEl = pill(right, "clock", "");
     paintClock();
+  }
+
+  if (cfg.widgets.showDesktop) {
+    // The sliver at the very end, exactly as the shell's taskbar has it.
+    const b = pill(right, "showdesktop", "Mostrar a área de trabalho");
+    b.className = "sliver";
+    b.onclick = () => invoke("show_desktop").catch(() => {});
   }
 }
 
@@ -232,6 +328,9 @@ setInterval(refreshMic, 2000);
 // Signal strength drifts slowly and the WLAN query is the dearest of the
 // three, so it runs a good deal less often.
 setInterval(refreshNet, 5000);
+setInterval(refreshVolume, 2000);
+// Charge moves slowly enough that anything faster is wasted wakeups.
+setInterval(refreshBattery, 30000);
 
 listen("config-changed", (e) => {
   cfg = e.payload;

@@ -18,22 +18,20 @@ use windows::Win32::UI::Shell::{
     SHAppBarMessage, ABE_BOTTOM, ABE_LEFT, ABE_RIGHT, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_REMOVE,
     ABM_SETPOS, APPBARDATA,
 };
+use windows::Win32::Graphics::Gdi::{
+    GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTOPRIMARY,
+};
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::WindowsAndMessaging::SPI_SETWORKAREA;
 use windows::Win32::UI::WindowsAndMessaging::{
     FindWindowW, GetSystemMetrics, IsWindow, IsWindowVisible, SendMessageTimeoutW,
-    SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
+    GetWindowRect, SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
     SWP_NOSENDCHANGING, SWP_NOZORDER, SW_HIDE, SW_SHOWNA, WM_SETTINGCHANGE,
 };
 
-/// Which screen edge the bar sits on.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum Edge {
-    Top,
-    Bottom,
-    Left,
-    Right,
-}
+pub use crate::geom::Edge;
+
+use crate::geom::{edge_rect, to_physical, Rect};
 
 impl Edge {
     fn raw(self) -> u32 {
@@ -44,10 +42,14 @@ impl Edge {
             Edge::Right => ABE_RIGHT,
         }
     }
+}
 
-    fn horizontal(self) -> bool {
-        matches!(self, Edge::Top | Edge::Bottom)
-    }
+fn to_rect(r: Rect) -> RECT {
+    RECT { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
+}
+
+fn from_rect(r: RECT) -> Rect {
+    Rect { left: r.left, top: r.top, right: r.right, bottom: r.bottom }
 }
 
 /// Set once we have hidden the shell's bar, so the panic hook knows to undo it.
@@ -186,22 +188,33 @@ impl AppBar {
     /// scaled display the two differ, and mixing them is what leaves the bar
     /// taller or shorter than the content inside it.
     fn physical_thickness(&self) -> i32 {
-        let dpi = unsafe { GetDpiForWindow(self.hwnd) };
-        let dpi = if dpi == 0 { 96 } else { dpi };
-        ((self.thickness as f32) * (dpi as f32) / 96.0).round() as i32
+        to_physical(self.thickness, unsafe { GetDpiForWindow(self.hwnd) })
     }
 
-    /// The rectangle we want, in virtual-screen coordinates, before Windows
-    /// has had its say.
+    /// The rectangle we want, in virtual-screen coordinates.
+    ///
+    /// Taken from the monitor the bar is on rather than `SM_CXSCREEN`, which
+    /// only ever describes the primary one: on a second monitor those metrics
+    /// would put the bar on the wrong screen entirely.
     fn desired(&self) -> RECT {
-        let (w, h) = unsafe { (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)) };
-        let t = self.physical_thickness();
-        match self.edge {
-            Edge::Top => RECT { left: 0, top: 0, right: w, bottom: t },
-            Edge::Bottom => RECT { left: 0, top: h - t, right: w, bottom: h },
-            Edge::Left => RECT { left: 0, top: 0, right: t, bottom: h },
-            Edge::Right => RECT { left: w - t, top: 0, right: w, bottom: h },
-        }
+        let screen = unsafe {
+            let monitor = MonitorFromWindow(self.hwnd, MONITOR_DEFAULTTOPRIMARY);
+            let mut info = MONITORINFO {
+                cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+                ..Default::default()
+            };
+            if GetMonitorInfoW(monitor, &mut info).as_bool() {
+                from_rect(info.rcMonitor)
+            } else {
+                Rect {
+                    left: 0,
+                    top: 0,
+                    right: GetSystemMetrics(SM_CXSCREEN),
+                    bottom: GetSystemMetrics(SM_CYSCREEN),
+                }
+            }
+        };
+        to_rect(edge_rect(screen, self.edge, self.physical_thickness()))
     }
 
     /// Take the space and move there.
@@ -218,7 +231,8 @@ impl AppBar {
             return;
         }
         let mut abd = self.data();
-        abd.rc = self.desired();
+        let wanted = self.desired();
+        abd.rc = wanted;
 
         if !self.replace_shell {
             unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
@@ -231,10 +245,15 @@ impl AppBar {
             }
         }
 
+        // SETPOS writes the approved rectangle back into abd.rc, and it is
+        // subject to the same reservations QUERYPOS is -- the hidden shell
+        // taskbar's among them. So while we are replacing that taskbar the
+        // window goes where we asked, not where the answer came back.
         unsafe { SHAppBarMessage(ABM_SETPOS, &mut abd) };
+        let placed = if self.replace_shell { wanted } else { abd.rc };
 
-        let (x, y) = (abd.rc.left, abd.rc.top);
-        let (cx, cy) = (abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
+        let (x, y) = (placed.left, placed.top);
+        let (cx, cy) = (placed.right - placed.left, placed.bottom - placed.top);
         unsafe {
             let _ = SetWindowPos(
                 self.hwnd,
@@ -245,6 +264,28 @@ impl AppBar {
                 cy,
                 SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER,
             );
+        }
+    }
+
+    /// Put the window back if something has moved or resized it.
+    ///
+    /// A display change, a resolution change or another appbar registering can
+    /// all shift us after the fact, and there is no notification for it
+    /// without a callback message on the window. Comparing against the
+    /// rectangle we want is a `GetWindowRect` -- cheap enough to do on the
+    /// same beat as everything else, and it only touches the window when it
+    /// has actually drifted.
+    pub fn ensure_placed(&self) {
+        if !self.registered {
+            return;
+        }
+        let wanted = self.desired();
+        let mut now = RECT::default();
+        if unsafe { GetWindowRect(self.hwnd, &mut now) }.is_err() {
+            return;
+        }
+        if now != wanted {
+            self.reposition();
         }
     }
 

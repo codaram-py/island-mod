@@ -20,6 +20,10 @@ sharing the screen. Putting it back is covered three ways:
 crash. Turning off **Substituir a barra do Windows** in the settings leaves the
 shell bar on screen and only reserves the edge, which is the safe way to try it.
 
+`geom.rs` holds the rectangle arithmetic with no win32 in it, so the part that
+decides whether the bar lands on the screen edge or hovering above it is
+covered by tests that run anywhere: `cargo test`.
+
 ## Building
 
 Needs the MSVC toolchain and the WebView2 runtime (ships with Windows 11).
@@ -41,17 +45,22 @@ Windows.
 
 `%LOCALAPPDATA%\codabar\config.json`, or the gear on the bar. Edge, thickness,
 colours, transparency, blur, corner radius, margin, font and which widgets show.
-The bar ships fully see-through, so the icons sit straight on the wallpaper the
-way Windows 11's do; turn the opacity up for a solid slab.
-Changes apply live; the file is written through a temp file so a crash mid-write
+The bar ships as acrylic at 86%, which is roughly what Windows 11's own
+taskbar looks like; turn the opacity down for a see-through one, bearing in
+mind that then you see whatever sits behind it. Changes apply live; the file is written through a temp file so a crash mid-write
 cannot truncate it.
 
 ## Widgets
 
-Working: the Start button, the open windows on the bar's monitor, network
-(wi-fi SSID and signal through the WLAN service, falling back to the network
-list manager for a wired link), clock, microphone mute (Core Audio, default
-capture device), the Claude Code button, settings.
+Working: Start, search, task view, the open windows on the bar's monitor,
+volume (click mutes, wheel adjusts), network (wi-fi SSID and signal from the
+WLAN service, falling back to the network list manager for a wired link),
+microphone mute, battery, clock, show desktop, the Claude Code button,
+settings.
+
+Start, search, task view and show desktop have no public API worth the
+trouble, so the bar taps the Win chord the user would have typed. Battery
+hides itself on a machine that has none.
 
 The window list filters the way the shell's own taskbar does -- visible,
 titled, unowned, not a tool window, and not DWM-cloaked, which is what keeps
@@ -59,8 +68,8 @@ suspended UWP apps and phantom `ApplicationFrame` windows out. Icons come from
 `WM_GETICON`, then the window class, then the executable, and are cached per
 window until the process behind it changes. Click focuses, middle-click closes.
 
-Not yet: mixer, the shell's notification area, VPN, music. They appear greyed
-out in the settings rather than as widgets that do nothing.
+Not yet: the shell's notification area, VPN, music, per-app mixer. They appear
+greyed out in the settings rather than as widgets that do nothing.
 
 The background-apps tray is the hard one. Tray icons belong to the shell: apps
 call `Shell_NotifyIcon`, which finds `Shell_TrayWnd` and sends `WM_COPYDATA` to

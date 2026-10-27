@@ -48,6 +48,15 @@ const PATHS = {
   wifi1: ["M12 20h.01", "M8.5 16.4a5 5 0 0 1 7 0"],
   wifi0: ["M12 20h.01", "m2 2 20 20", "M8.5 16.4a5 5 0 0 1 7 0"],
   wired: ["M6.5 7h11", "M12 7v4", "M4 11h16v4H4z", "M8 19v-4", "M16 19v-4"],
+  search: ["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z", "m20 20-4.2-4.2"],
+  taskView: ["M3 5h8v6H3z", "M13 5h8v6h-8z", "M3 13h8v6H3z", "M13 13h8v6h-8z"],
+  // Speaker cone plus arcs that drop away as the level does.
+  vol2: ["M11 5 6 9H3v6h3l5 4z", "M15.5 8.5a5 5 0 0 1 0 7", "M18.5 5.5a9 9 0 0 1 0 13"],
+  vol1: ["M11 5 6 9H3v6h3l5 4z", "M15.5 8.5a5 5 0 0 1 0 7"],
+  vol0: ["M11 5 6 9H3v6h3l5 4z"],
+  volMute: ["M11 5 6 9H3v6h3l5 4z", "m16 9 5 6", "m21 9-5 6"],
+  battery: ["M3 8h15v8H3z", "M20.5 11v2"],
+  bolt: ["m12 6-3 6h4l-2 6"],
   // Drawn in icon() rather than here: it is filled, not stroked.
   start: null,
 };

@@ -1,9 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod appbar;
+mod geom;
 #[cfg(windows)]
 mod audio;
 mod config;
+#[cfg(windows)]
+mod power;
 #[cfg(windows)]
 mod net;
 #[cfg(windows)]
@@ -145,21 +148,102 @@ fn launch_claude(state: tauri::State<'_, BarState>) -> Result<(), String> {
     }
 }
 
-/// Open the Windows Start menu by simulating a Win key press.
+/// Tap Win, optionally with another key held, to reach a shell surface.
 ///
-/// `keybd_event` is the simplest route; `SendInput` is the modern one, but for
-/// a single modifier tap either works and this needs no extra plumbing.
+/// The Start menu, task view, search and show-desktop all answer to a Win
+/// chord and have no public API worth the trouble, so this is how the bar
+/// reaches them -- the same keystroke the user would type.
+#[cfg(windows)]
+fn tap_win(with: Option<u16>) {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{keybd_event, KEYEVENTF_KEYUP, VK_LWIN};
+    unsafe {
+        let win = VK_LWIN.0 as u8;
+        keybd_event(win, 0, Default::default(), 0);
+        if let Some(k) = with {
+            keybd_event(k as u8, 0, Default::default(), 0);
+            keybd_event(k as u8, 0, KEYEVENTF_KEYUP, 0);
+        }
+        keybd_event(win, 0, KEYEVENTF_KEYUP, 0);
+    }
+}
+
 #[tauri::command]
 fn open_start_menu() -> Result<(), String> {
     #[cfg(windows)]
-    unsafe {
-        use windows::Win32::UI::Input::KeyboardAndMouse::{
-            keybd_event, KEYEVENTF_KEYUP, VK_LWIN,
-        };
-        keybd_event(VK_LWIN.0 as u8, 0, Default::default(), 0);
-        keybd_event(VK_LWIN.0 as u8, 0, KEYEVENTF_KEYUP, 0);
-    }
+    tap_win(None);
     Ok(())
+}
+
+#[tauri::command]
+fn open_task_view() -> Result<(), String> {
+    #[cfg(windows)]
+    tap_win(Some(windows::Win32::UI::Input::KeyboardAndMouse::VK_TAB.0));
+    Ok(())
+}
+
+#[tauri::command]
+fn open_search() -> Result<(), String> {
+    #[cfg(windows)]
+    tap_win(Some(windows::Win32::UI::Input::KeyboardAndMouse::VK_S.0));
+    Ok(())
+}
+
+/// Minimise everything, and restore it on a second press, the way the sliver
+/// at the end of the shell's taskbar does.
+#[tauri::command]
+fn show_desktop() -> Result<(), String> {
+    #[cfg(windows)]
+    tap_win(Some(windows::Win32::UI::Input::KeyboardAndMouse::VK_D.0));
+    Ok(())
+}
+
+#[tauri::command]
+fn volume() -> Option<audio::Volume> {
+    #[cfg(windows)]
+    {
+        audio::volume()
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
+}
+
+#[tauri::command]
+fn set_volume(level: u32) -> Option<audio::Volume> {
+    #[cfg(windows)]
+    {
+        audio::set_volume(level)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = level;
+        None
+    }
+}
+
+#[tauri::command]
+fn toggle_speakers() -> Option<audio::Volume> {
+    #[cfg(windows)]
+    {
+        audio::toggle_speakers()
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
+}
+
+#[tauri::command]
+fn battery() -> Option<power::Battery> {
+    #[cfg(windows)]
+    {
+        power::battery()
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
 }
 
 #[tauri::command]
@@ -268,6 +352,11 @@ fn spawn_app_poll(app: tauri::AppHandle) {
                 Some(s) => s,
                 None => return,
             };
+            // Cheap, and it is the only thing that catches a resolution change
+            // or another appbar shoving us off the edge after the fact.
+            if let Some(bar) = state.bar.lock().unwrap().as_ref() {
+                bar.ensure_placed();
+            }
             if !state.config.lock().unwrap().widgets.apps {
                 if !last.is_empty() {
                     last.clear();
@@ -315,6 +404,13 @@ fn main() {
             mic_muted,
             toggle_mic,
             open_start_menu,
+            open_task_view,
+            open_search,
+            show_desktop,
+            volume,
+            set_volume,
+            toggle_speakers,
+            battery,
             net_status,
             open_network_settings,
             list_windows,
@@ -347,6 +443,15 @@ fn main() {
             // Shown only once it is sized and placed, so it never flashes at
             // the default geometry.
             window.show()?;
+
+            // Showing the window can put back the geometry tauri.conf.json
+            // asked for, which would drop the bar at the top of the screen, so
+            // the placement is re-asserted on the other side of it. After this
+            // the poll thread keeps it honest.
+            #[cfg(windows)]
+            if let Some(bar) = app.state::<BarState>().bar.lock().unwrap().as_ref() {
+                bar.reposition();
+            }
             Ok(())
         })
         .build(tauri::generate_context!())
