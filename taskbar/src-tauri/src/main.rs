@@ -137,6 +137,23 @@ fn launch_claude(state: tauri::State<'_, BarState>) -> Result<(), String> {
     }
 }
 
+/// Open the Windows Start menu by simulating a Win key press.
+///
+/// `keybd_event` is the simplest route; `SendInput` is the modern one, but for
+/// a single modifier tap either works and this needs no extra plumbing.
+#[tauri::command]
+fn open_start_menu() -> Result<(), String> {
+    #[cfg(windows)]
+    unsafe {
+        use windows::Win32::UI::Input::KeyboardAndMouse::{
+            keybd_event, KEYEVENTF_KEYUP, VK_LWIN,
+        };
+        keybd_event(VK_LWIN.0 as u8, 0, Default::default(), 0);
+        keybd_event(VK_LWIN.0 as u8, 0, KEYEVENTF_KEYUP, 0);
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn mic_muted() -> Option<bool> {
     #[cfg(windows)]
@@ -182,7 +199,8 @@ fn main() {
             open_settings,
             launch_claude,
             mic_muted,
-            toggle_mic
+            toggle_mic,
+            open_start_menu
         ])
         .setup(move |app| {
             let window = app

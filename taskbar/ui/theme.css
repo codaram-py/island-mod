@@ -61,6 +61,16 @@ button {
   transition: background-color 0.12s ease, color 0.12s ease;
 }
 
+/* Icon-only buttons: a fixed square, same width across the row — like the
+   Windows taskbar's app slots. */
+.pill.square {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  flex: none;
+}
+
 .pill:hover {
   background: color-mix(in srgb, var(--fg) 10%, transparent);
 }
