@@ -49,8 +49,8 @@ impl Default for Theme {
             foreground: "#e8e8ee".into(),
             muted: "#8b8b99".into(),
             accent: "#f0be5a".into(),
-            opacity: 0.82,
-            blur: true,
+            opacity: 0.0,
+            blur: false,
             radius: 0,
             font_family: "Segoe UI Variable, Segoe UI, system-ui, sans-serif".into(),
             font_size: 12,
@@ -76,6 +76,11 @@ pub struct Widgets {
     /// Button that opens Claude Code in a compact window.
     pub claude: bool,
     pub claude_command: String,
+    /// The open windows on this monitor, next to the Start button.
+    pub apps: bool,
+    /// Ceiling on how many are drawn, so a desktop full of windows cannot
+    /// push the clock off the bar.
+    pub apps_max: usize,
 }
 
 impl Default for Widgets {
@@ -91,6 +96,8 @@ impl Default for Widgets {
             media: true,
             claude: true,
             claude_command: "claude".into(),
+            apps: true,
+            apps_max: 20,
         }
     }
 }
@@ -112,7 +119,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             edge: "bottom".into(),
-            thickness: 48,
+            thickness: 40,
             replace_shell: true,
             theme: Theme::default(),
             widgets: Widgets::default(),
@@ -127,7 +134,7 @@ impl Config {
             self.edge = "bottom".into();
         }
         self.thickness = self.thickness.clamp(20, 200);
-        self.theme.opacity = self.theme.opacity.clamp(0.15, 1.0);
+        self.theme.opacity = self.theme.opacity.clamp(0.0, 1.0);
         self.theme.font_size = self.theme.font_size.clamp(8, 32);
         self.theme.radius = self.theme.radius.min(40);
         self.theme.gap = self.theme.gap.min(40);
@@ -138,6 +145,7 @@ impl Config {
         if self.widgets.claude_command.trim().is_empty() {
             self.widgets.claude_command = Widgets::default().claude_command;
         }
+        self.widgets.apps_max = self.widgets.apps_max.clamp(1, 40);
     }
 
     pub fn load() -> Config {

@@ -23,6 +23,8 @@ const FIELDS = {
   clock: ["widgets", "clock"],
   clockSeconds: ["widgets", "clockSeconds"],
   mic: ["widgets", "mic"],
+  apps: ["widgets", "apps"],
+  appsMax: ["widgets", "appsMax"],
   wifi: ["widgets", "wifi"],
   mixer: ["widgets", "mixer"],
   tray: ["widgets", "tray"],

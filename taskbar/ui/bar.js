@@ -73,10 +73,11 @@ function build() {
   start.onclick = () => invoke("open_start_menu").catch(() => {});
   // The apps list (populated by a later refresh) sits right after Start,
   // in the same centre strip, so Start/apps read as one unit.
-  const apps = document.createElement("div");
-  apps.id = "apps";
-  apps.className = "zone";
-  center.appendChild(apps);
+  const appsHost = document.createElement("div");
+  appsHost.id = "apps";
+  appsHost.className = "zone";
+  center.appendChild(appsHost);
+  paintApps();
 
   // ---- right: status widgets ----------------------------------------------
   if (cfg.widgets.claude) {
@@ -104,6 +105,51 @@ function build() {
   }
 }
 
+// ---- open windows ----------------------------------------------------------
+// The backend pushes the list once a second, but only when it differs. Nodes
+// are reused by hwnd so an icon never blinks: a refresh that only moved the
+// focus touches two class lists and nothing else.
+let apps = [];
+
+function paintApps() {
+  const host = document.getElementById("apps");
+  if (!host) return;
+  if (!cfg.widgets.apps) {
+    host.replaceChildren();
+    return;
+  }
+
+  const existing = new Map();
+  for (const el of host.children) existing.set(el.dataset.hwnd, el);
+
+  const next = [];
+  for (const w of apps) {
+    const key = String(w.hwnd);
+    let el = existing.get(key);
+    if (!el) {
+      el = document.createElement("button");
+      el.className = "pill square open";
+      el.dataset.hwnd = key;
+      const img = document.createElement("img");
+      el.appendChild(img);
+      el.onclick = () => invoke("focus_window", { hwnd: w.hwnd }).catch(() => {});
+      // Middle click closes, the way the shell's taskbar does. auxclick is the
+      // event that actually carries button 1 reliably.
+      el.onauxclick = (ev) => {
+        if (ev.button !== 1) return;
+        ev.preventDefault();
+        invoke("close_window", { hwnd: w.hwnd }).catch(() => {});
+      };
+    }
+    const img = el.firstElementChild;
+    if (img && img.getAttribute("src") !== w.icon) img.setAttribute("src", w.icon);
+    if (el.title !== w.title) el.title = w.title;
+    el.classList.toggle("active", w.active);
+    next.push(el);
+  }
+  host.replaceChildren(...next);
+}
+
 function applyEdge() {
   const vertical = cfg.edge === "left" || cfg.edge === "right";
   document.body.classList.toggle("vertical", vertical);
@@ -112,6 +158,18 @@ function applyEdge() {
 applyTheme(cfg);
 applyEdge();
 build();
+
+invoke("list_windows")
+  .then((list) => {
+    apps = list;
+    paintApps();
+  })
+  .catch(() => {});
+
+listen("apps-changed", (e) => {
+  apps = e.payload;
+  paintApps();
+});
 
 // A second is enough for a clock without seconds too: it keeps the minute
 // from lagging by up to a minute after a resume.

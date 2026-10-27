@@ -41,7 +41,7 @@ const PATHS = {
   micOff: ["m2 2 20 20", "M18.89 13.23A7 7 0 0 0 19 12v-2", "M5 10v2a7 7 0 0 0 12 5", "M15 9.34V5a3 3 0 0 0-5.68-1.33", "M9 9v3a3 3 0 0 0 5.12 2.12", "M12 19v3"],
   settings: ["M20 7h-9", "M14 17H5", "M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", "M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
   terminal: ["m4 17 6-6-6-6", "M12 19h8"],
-  // Windows-11-ish flag: four tiles with a slight diagonal split, filled.
+  // Drawn in icon() rather than here: it is filled, not stroked.
   start: null,
 };
 
@@ -57,10 +57,10 @@ export function icon(name) {
     svg.setAttribute("fill", "#0078d4");
     svg.setAttribute("stroke", "none");
     for (const d of [
-      "M3 4h8v8H3z",
-      "M13 3h8v9h-8z",
-      "M3 13h8v8H3z",
-      "M13 13h8v8h-8z",
+      "M3 4.5l8-1.5v8H3z",
+      "M12 2.75l9-1.75v10h-9z",
+      "M3 13h8v8.5l-8-1.5z",
+      "M12 13h9v10.25l-9-1.75z",
     ]) {
       const p = document.createElementNS(ns, "path");
       p.setAttribute("d", d);

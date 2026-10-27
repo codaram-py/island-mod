@@ -5,12 +5,12 @@
   --fg: #e8e8ee;
   --muted: #8b8b99;
   --accent: #f0be5a;
-  --opacity: 0.82;
+  --opacity: 0;
   --radius: 0px;
   --gap: 6px;
   --font-size: 12px;
   --font: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --pill: 8px;
+  --pill: 2px;
 }
 
 * {
@@ -30,6 +30,9 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  /* The bar is see-through by default, so text sits straight on the wallpaper
+     and needs its own contrast. */
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.55);
 }
 
 .surface {
@@ -64,11 +67,45 @@ button {
 /* Icon-only buttons: a fixed square, same width across the row — like the
    Windows taskbar's app slots. */
 .pill.square {
-  width: 36px;
-  height: 36px;
+  position: relative;
+  width: 40px;
+  height: 40px;
   padding: 0;
+  border-radius: 4px;
   justify-content: center;
   flex: none;
+}
+
+/* The focused window gets the short underline Windows 11 uses. Other open
+   windows get a shorter, dimmer one, so you can tell open from merely pinned. */
+.pill.square.open::after,
+.pill.square.active::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  translate: -50% 0;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: width 0.15s ease, opacity 0.15s ease;
+}
+
+.pill.square.open::after {
+  width: 6px;
+  opacity: 0.45;
+}
+
+.pill.square.active::after {
+  width: 16px;
+  opacity: 1;
+  background: var(--accent);
+}
+
+.pill.square img {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
 }
 
 .pill:hover {

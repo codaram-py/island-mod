@@ -18,6 +18,7 @@ use windows::Win32::UI::Shell::{
     SHAppBarMessage, ABE_BOTTOM, ABE_LEFT, ABE_RIGHT, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_REMOVE,
     ABM_SETPOS, APPBARDATA,
 };
+use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::WindowsAndMessaging::{
     FindWindowW, GetSystemMetrics, IsWindow, IsWindowVisible, SendMessageTimeoutW,
     SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
@@ -169,11 +170,23 @@ impl AppBar {
         }
     }
 
+    /// `thickness` in physical pixels.
+    ///
+    /// It is stored and configured in logical pixels, because that is what the
+    /// webview lays the bar out in; the win32 side wants physical ones. On a
+    /// scaled display the two differ, and mixing them is what leaves the bar
+    /// taller or shorter than the content inside it.
+    fn physical_thickness(&self) -> i32 {
+        let dpi = unsafe { GetDpiForWindow(self.hwnd) };
+        let dpi = if dpi == 0 { 96 } else { dpi };
+        ((self.thickness as f32) * (dpi as f32) / 96.0).round() as i32
+    }
+
     /// The rectangle we want, in virtual-screen coordinates, before Windows
     /// has had its say.
     fn desired(&self) -> RECT {
         let (w, h) = unsafe { (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)) };
-        let t = self.thickness;
+        let t = self.physical_thickness();
         match self.edge {
             Edge::Top => RECT { left: 0, top: 0, right: w, bottom: t },
             Edge::Bottom => RECT { left: 0, top: h - t, right: w, bottom: h },
@@ -196,7 +209,7 @@ impl AppBar {
 
         unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
 
-        let t = self.thickness;
+        let t = self.physical_thickness();
         match self.edge {
             Edge::Top => abd.rc.bottom = abd.rc.top + t,
             Edge::Bottom => abd.rc.top = abd.rc.bottom - t,

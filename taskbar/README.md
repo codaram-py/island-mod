@@ -36,16 +36,25 @@ Windows.
 
 `%LOCALAPPDATA%\codabar\config.json`, or the gear on the bar. Edge, thickness,
 colours, transparency, blur, corner radius, margin, font and which widgets show.
+The bar ships fully see-through, so the icons sit straight on the wallpaper the
+way Windows 11's do; turn the opacity up for a solid slab.
 Changes apply live; the file is written through a temp file so a crash mid-write
 cannot truncate it.
 
 ## Widgets
 
-Working: clock, microphone mute (Core Audio, default capture device), the
-Claude Code button, settings.
+Working: the Start button, the open windows on the bar's monitor, clock,
+microphone mute (Core Audio, default capture device), the Claude Code button,
+settings.
 
-Not yet: Wi-Fi, mixer, background apps, VPN, music. They appear greyed out in
-the settings rather than as widgets that do nothing.
+The window list filters the way the shell's own taskbar does -- visible,
+titled, unowned, not a tool window, and not DWM-cloaked, which is what keeps
+suspended UWP apps and phantom `ApplicationFrame` windows out. Icons come from
+`WM_GETICON`, then the window class, then the executable, and are cached per
+window until the process behind it changes. Click focuses, middle-click closes.
+
+Not yet: Wi-Fi, mixer, the shell's notification area, VPN, music. They appear
+greyed out in the settings rather than as widgets that do nothing.
 
 The background-apps tray is the hard one. Tray icons belong to the shell: apps
 call `Shell_NotifyIcon`, which finds `Shell_TrayWnd` and sends `WM_COPYDATA` to

@@ -4,12 +4,14 @@ mod appbar;
 #[cfg(windows)]
 mod audio;
 mod config;
+#[cfg(windows)]
+mod winlist;
 
 use std::sync::Mutex;
 
 use appbar::{AppBar, Edge};
 use config::Config;
-use tauri::{Manager, RunEvent};
+use tauri::{Emitter, Manager, RunEvent};
 
 fn edge_from(s: &str) -> Edge {
     match s {
@@ -30,6 +32,10 @@ fn edge_from(s: &str) -> Edge {
 struct BarState {
     bar: Mutex<Option<AppBar>>,
     config: Mutex<Config>,
+    /// The monitor the bar sits on and the bar's own window, so the app list
+    /// can be scoped to this screen and leave itself out.
+    #[cfg(windows)]
+    monitor: Mutex<(winlist::BarMonitor, winlist::BarHwnd)>,
 }
 
 unsafe impl Send for BarState {}
@@ -155,6 +161,40 @@ fn open_start_menu() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn list_windows(state: tauri::State<'_, BarState>) -> Vec<winlist::WindowInfo> {
+    #[cfg(windows)]
+    {
+        let max = state.config.lock().unwrap().widgets.apps_max;
+        let (monitor, skip) = {
+            let held = state.monitor.lock().unwrap();
+            *held
+        };
+        winlist::list(monitor, skip, max)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = state;
+        Vec::new()
+    }
+}
+
+#[tauri::command]
+fn focus_window(hwnd: isize) {
+    #[cfg(windows)]
+    winlist::focus(hwnd);
+    #[cfg(not(windows))]
+    let _ = hwnd;
+}
+
+#[tauri::command]
+fn close_window(hwnd: isize) {
+    #[cfg(windows)]
+    winlist::close(hwnd);
+    #[cfg(not(windows))]
+    let _ = hwnd;
+}
+
+#[tauri::command]
 fn mic_muted() -> Option<bool> {
     #[cfg(windows)]
     {
@@ -178,6 +218,44 @@ fn toggle_mic() -> Option<bool> {
     }
 }
 
+/// Push the app list to the bar once a second.
+///
+/// A plain thread rather than an async task: every call in here is a blocking
+/// win32 one, and the only thing shared is the handle, which is `Send`. The
+/// list is only emitted when it differs, so an idle desktop costs one
+/// enumeration a second and no IPC.
+#[cfg(windows)]
+fn spawn_app_poll(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        let mut last: Vec<winlist::WindowInfo> = Vec::new();
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(1));
+            let state = match app.try_state::<BarState>() {
+                Some(s) => s,
+                None => return,
+            };
+            if !state.config.lock().unwrap().widgets.apps {
+                if !last.is_empty() {
+                    last.clear();
+                    let _ = app.emit("apps-changed", &last);
+                }
+                continue;
+            }
+            let max = state.config.lock().unwrap().widgets.apps_max;
+            let (monitor, skip) = *state.monitor.lock().unwrap();
+            let now = winlist::list(monitor, skip, max);
+            let same = now.len() == last.len()
+                && now.iter().zip(&last).all(|(a, b)| {
+                    a.hwnd == b.hwnd && a.active == b.active && a.title == b.title
+                });
+            if !same {
+                let _ = app.emit("apps-changed", &now);
+                last = now;
+            }
+        }
+    });
+}
+
 fn main() {
     // Both before anything is hidden: the net has to be up first, and a hide
     // left behind by a crashed run has to be undone before we hide again.
@@ -190,6 +268,8 @@ fn main() {
         .manage(BarState {
             bar: Mutex::new(None),
             config: Mutex::new(cfg.clone()),
+            #[cfg(windows)]
+            monitor: Mutex::new((Default::default(), Default::default())),
         })
         .invoke_handler(tauri::generate_handler![
             get_config,
@@ -200,7 +280,10 @@ fn main() {
             launch_claude,
             mic_muted,
             toggle_mic,
-            open_start_menu
+            open_start_menu,
+            list_windows,
+            focus_window,
+            close_window
         ])
         .setup(move |app| {
             let window = app
@@ -216,7 +299,13 @@ fn main() {
                     cfg.thickness as i32,
                     cfg.replace_shell,
                 )?;
-                app.state::<BarState>().bar.lock().unwrap().replace(bar);
+                let state = app.state::<BarState>();
+                state.bar.lock().unwrap().replace(bar);
+                // Recorded after the bar has been placed, so the monitor is the
+                // one it actually landed on.
+                *state.monitor.lock().unwrap() = (winlist::monitor_of(hwnd), hwnd);
+
+                spawn_app_poll(app.handle().clone());
             }
 
             // Shown only once it is sized and placed, so it never flashes at
