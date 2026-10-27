@@ -217,8 +217,9 @@ impl AppBar {
         if !self.registered {
             return;
         }
+        let want = self.desired();
         let mut abd = self.data();
-        abd.rc = self.desired();
+        abd.rc = want;
 
         if !self.replace_shell {
             unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
@@ -233,8 +234,13 @@ impl AppBar {
 
         unsafe { SHAppBarMessage(ABM_SETPOS, &mut abd) };
 
-        let (x, y) = (abd.rc.left, abd.rc.top);
-        let (cx, cy) = (abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top);
+        // When replacing the shell, SETPOS can still shrink our rectangle to
+        // zero because the shell's bar is hidden but its reservation lives on.
+        // Fall back to the rectangle we wanted all along: SetWindowPos actually
+        // sizing the window to it is what the user sees anyway.
+        let rect = if self.replace_shell { want } else { abd.rc };
+        let (x, y) = (rect.left, rect.top);
+        let (cx, cy) = (rect.right - rect.left, rect.bottom - rect.top);
         unsafe {
             let _ = SetWindowPos(
                 self.hwnd,
