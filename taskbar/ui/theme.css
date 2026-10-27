@@ -108,6 +108,15 @@ button {
   pointer-events: none;
 }
 
+/* Stand-in for a window whose icon could not be read. */
+.pill.square .initial {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .pill:hover {
   background: color-mix(in srgb, var(--fg) 10%, transparent);
 }

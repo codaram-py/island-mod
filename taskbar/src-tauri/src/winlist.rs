@@ -21,12 +21,14 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_FORMAT,
     PROCESS_QUERY_LIMITED_INFORMATION,
 };
+use windows::Win32::System::Threading::GetCurrentProcessId;
 use windows::Win32::UI::WindowsAndMessaging::{
-    DestroyIcon, EnumWindows, GetClassLongPtrW, GetForegroundWindow, GetIconInfo, GetWindow,
-    GetWindowLongPtrW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId, IsIconic,
-    IsWindowVisible, PostMessageW, SendMessageTimeoutW, SetForegroundWindow, ShowWindow,
-    GCLP_HICON, GCLP_HICONSM, GWL_EXSTYLE, GW_OWNER, HICON, ICONINFO, ICON_BIG, ICON_SMALL2,
-    SMTO_ABORTIFHUNG, SW_RESTORE, WM_CLOSE, WM_GETICON, WS_EX_TOOLWINDOW,
+    DestroyIcon, EnumWindows, GetAncestor, GetClassLongPtrW, GetForegroundWindow, GetIconInfo,
+    GetShellWindow, GetWindowLongPtrW, GetWindowRect, GetWindowTextLengthW, GetWindowTextW,
+    GetWindowThreadProcessId, IsIconic, IsWindowVisible, PostMessageW, SendMessageTimeoutW,
+    SetForegroundWindow, ShowWindow, GA_ROOTOWNER, GCLP_HICON, GCLP_HICONSM, GWL_EXSTYLE, HICON,
+    ICONINFO, ICON_BIG, ICON_SMALL2, SMTO_ABORTIFHUNG, SW_RESTORE, WM_CLOSE, WM_GETICON,
+    WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
 };
 
 pub use windows::Win32::Foundation::HWND as BarHwnd;
@@ -59,18 +61,33 @@ unsafe extern "system" fn collect(hwnd: HWND, lparam: LPARAM) -> BOOL {
 /// Cloaking is the one that matters on Windows 10 and up -- that is how the
 /// shell hides UWP apps that are suspended and the phantom `ApplicationFrame`
 /// windows that would otherwise show up as duplicates.
-unsafe fn is_app_window(hwnd: HWND) -> bool {
+unsafe fn is_app_window(hwnd: HWND, own_pid: u32) -> bool {
     if !IsWindowVisible(hwnd).as_bool() {
         return false;
     }
     if GetWindowTextLengthW(hwnd) == 0 {
         return false;
     }
-    if GetWindow(hwnd, GW_OWNER).map(|h| !h.is_invalid()).unwrap_or(false) {
+    // The desktop's own window is top-level, visible and titled.
+    if hwnd == GetShellWindow() {
+        return false;
+    }
+    // Our own windows -- the bar is skipped by handle, but the settings window
+    // and whatever else the webview host puts up are not.
+    let mut pid = 0u32;
+    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+    if pid == own_pid {
+        return false;
+    }
+    // GA_ROOTOWNER rather than GW_OWNER: a dialog three levels down has no
+    // direct owner set but still belongs to the app above it, and the browser
+    // helper windows that were showing up as blank tiles are exactly that.
+    if GetAncestor(hwnd, GA_ROOTOWNER) != hwnd {
         return false;
     }
     let ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
-    if ex & WS_EX_TOOLWINDOW.0 != 0 {
+    // WS_EX_APPWINDOW is an app saying "list me anyway", which beats TOOLWINDOW.
+    if ex & WS_EX_TOOLWINDOW.0 != 0 && ex & WS_EX_APPWINDOW.0 == 0 {
         return false;
     }
     let mut cloaked: u32 = 0;
@@ -81,6 +98,14 @@ unsafe fn is_app_window(hwnd: HWND) -> bool {
         std::mem::size_of::<u32>() as u32,
     );
     if ok.is_ok() && cloaked != 0 {
+        return false;
+    }
+    // Degenerate rectangles: helper windows parked at 0x0 or a single pixel.
+    let mut rect = windows::Win32::Foundation::RECT::default();
+    if GetWindowRect(hwnd, &mut rect).is_err() {
+        return false;
+    }
+    if rect.right - rect.left < 32 || rect.bottom - rect.top < 32 {
         return false;
     }
     true
@@ -314,6 +339,7 @@ pub fn list(monitor: HMONITOR, skip: HWND, max: usize) -> Vec<WindowInfo> {
     }
 
     let foreground = unsafe { GetForegroundWindow() };
+    let own_pid = unsafe { GetCurrentProcessId() };
     let mut live = Vec::new();
     let mut out = Vec::new();
 
@@ -322,7 +348,7 @@ pub fn list(monitor: HMONITOR, skip: HWND, max: usize) -> Vec<WindowInfo> {
             continue;
         }
         unsafe {
-            if !is_app_window(hwnd) {
+            if !is_app_window(hwnd, own_pid) {
                 continue;
             }
             if !monitor.is_invalid()

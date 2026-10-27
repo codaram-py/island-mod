@@ -19,6 +19,7 @@ use windows::Win32::UI::Shell::{
     ABM_SETPOS, APPBARDATA,
 };
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
+use windows::Win32::UI::WindowsAndMessaging::SPI_SETWORKAREA;
 use windows::Win32::UI::WindowsAndMessaging::{
     FindWindowW, GetSystemMetrics, IsWindow, IsWindowVisible, SendMessageTimeoutW,
     SetWindowPos, ShowWindow, SMTO_ABORTIFHUNG, SM_CXSCREEN, SM_CYSCREEN, SWP_NOACTIVATE,
@@ -156,6 +157,12 @@ impl AppBar {
         }
 
         bar.reposition();
+        // A window that was already maximized keeps the work area it was
+        // maximized against, so it would sit under the strip we just took --
+        // which, on a see-through bar, reads as that window's title bar
+        // showing through. Telling everyone the work area moved makes them
+        // re-flow.
+        broadcast_workarea_change();
         Ok(bar)
     }
 
@@ -269,18 +276,7 @@ impl AppBar {
             set_shell_visible(true);
             let _ = std::fs::remove_file(marker_path());
             // Nudge the shell so it re-reads the work area it just got back.
-            unsafe {
-                let mut res: usize = 0;
-                let _ = SendMessageTimeoutW(
-                    windows::Win32::UI::WindowsAndMessaging::HWND_BROADCAST,
-                    WM_SETTINGCHANGE,
-                    WPARAM(0),
-                    LPARAM(0),
-                    SMTO_ABORTIFHUNG,
-                    1000,
-                    Some(&mut res as *mut usize as *mut _),
-                );
-            }
+            broadcast_workarea_change();
         }
     }
 }
@@ -288,6 +284,25 @@ impl AppBar {
 impl Drop for AppBar {
     fn drop(&mut self) {
         self.teardown();
+    }
+}
+
+/// Tell every top-level window that the work area moved.
+///
+/// `SPI_SETWORKAREA` is the hint that makes a maximized window re-fit itself;
+/// sent with a timeout so one hung app cannot stall the bar coming up.
+fn broadcast_workarea_change() {
+    unsafe {
+        let mut res: usize = 0;
+        let _ = SendMessageTimeoutW(
+            windows::Win32::UI::WindowsAndMessaging::HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            WPARAM(SPI_SETWORKAREA.0 as usize),
+            LPARAM(0),
+            SMTO_ABORTIFHUNG,
+            1000,
+            Some(&mut res as *mut usize as *mut _),
+        );
     }
 }
 

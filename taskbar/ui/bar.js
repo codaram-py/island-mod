@@ -130,8 +130,6 @@ function paintApps() {
       el = document.createElement("button");
       el.className = "pill square open";
       el.dataset.hwnd = key;
-      const img = document.createElement("img");
-      el.appendChild(img);
       el.onclick = () => invoke("focus_window", { hwnd: w.hwnd }).catch(() => {});
       // Middle click closes, the way the shell's taskbar does. auxclick is the
       // event that actually carries button 1 reliably.
@@ -141,8 +139,22 @@ function paintApps() {
         invoke("close_window", { hwnd: w.hwnd }).catch(() => {});
       };
     }
-    const img = el.firstElementChild;
-    if (img && img.getAttribute("src") !== w.icon) img.setAttribute("src", w.icon);
+    // An empty src makes the webview re-request the page itself, so a window
+    // whose icon could not be read gets its initial instead of a blank tile.
+    if (el.dataset.icon !== w.icon) {
+      el.dataset.icon = w.icon;
+      if (w.icon) {
+        const img = document.createElement("img");
+        img.src = w.icon;
+        img.alt = "";
+        el.replaceChildren(img);
+      } else {
+        const span = document.createElement("span");
+        span.className = "initial";
+        span.textContent = (w.title.trim()[0] || "?").toUpperCase();
+        el.replaceChildren(span);
+      }
+    }
     if (el.title !== w.title) el.title = w.title;
     el.classList.toggle("active", w.active);
     next.push(el);
