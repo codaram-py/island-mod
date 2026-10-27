@@ -31,6 +31,39 @@ async function refreshMic() {
   paintMic(await invoke("mic_muted"));
 }
 
+// ---- network ---------------------------------------------------------------
+let netBtn = null;
+
+function paintNet(info) {
+  if (!netBtn) return;
+  if (!info || info.kind === "none") {
+    netBtn.replaceChildren(icon("wifi0"));
+    netBtn.title = "Sem conexão";
+    netBtn.classList.add("alert");
+    return;
+  }
+  netBtn.classList.remove("alert");
+  if (info.kind === "wired") {
+    netBtn.replaceChildren(icon("wired"));
+    netBtn.title = info.online ? "Rede cabeada" : "Rede cabeada · sem internet";
+    return;
+  }
+  // Thirds of the quality scale, so a bar is lost roughly every 33 points.
+  const bars = info.quality >= 67 ? 3 : info.quality >= 34 ? 2 : 1;
+  netBtn.replaceChildren(icon("wifi" + bars));
+  netBtn.title =
+    (info.ssid || "Wi-Fi") +
+    " · " +
+    info.quality +
+    "%" +
+    (info.online ? "" : " · sem internet");
+}
+
+async function refreshNet() {
+  if (!netBtn) return;
+  paintNet(await invoke("net_status").catch(() => null));
+}
+
 // ---- clock -----------------------------------------------------------------
 let clockEl = null;
 
@@ -64,6 +97,7 @@ function build() {
   center.replaceChildren();
   right.replaceChildren();
   micBtn = null;
+  netBtn = null;
   clockEl = null;
 
   // ---- center: Start + apps ------------------------------------------------
@@ -85,6 +119,14 @@ function build() {
     b.classList.add("square");
     b.appendChild(icon("terminal"));
     b.onclick = () => invoke("launch_claude").catch(() => {});
+  }
+
+  if (cfg.widgets.wifi) {
+    netBtn = pill(right, "net", "Rede");
+    netBtn.classList.add("square");
+    // The quickest route to the thing you actually want when you click it.
+    netBtn.onclick = () => invoke("open_network_settings").catch(() => {});
+    refreshNet();
   }
 
   if (cfg.widgets.mic) {
@@ -187,6 +229,9 @@ listen("apps-changed", (e) => {
 // from lagging by up to a minute after a resume.
 setInterval(paintClock, 1000);
 setInterval(refreshMic, 2000);
+// Signal strength drifts slowly and the WLAN query is the dearest of the
+// three, so it runs a good deal less often.
+setInterval(refreshNet, 5000);
 
 listen("config-changed", (e) => {
   cfg = e.payload;

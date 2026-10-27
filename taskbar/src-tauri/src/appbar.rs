@@ -118,6 +118,7 @@ pub struct AppBar {
     edge: Edge,
     thickness: i32,
     registered: bool,
+    replace_shell: bool,
 }
 
 impl AppBar {
@@ -138,6 +139,7 @@ impl AppBar {
             edge,
             thickness: thickness.max(1),
             registered: false,
+            replace_shell,
         };
 
         let mut abd = bar.data();
@@ -202,11 +204,15 @@ impl AppBar {
         }
     }
 
-    /// Ask Windows where the bar may sit, then take that space and move there.
+    /// Take the space and move there.
     ///
-    /// `ABM_QUERYPOS` can slide the rectangle along the edge to make room for
-    /// other appbars; it does not change our thickness, so we pin that back
-    /// before `ABM_SETPOS` to keep the bar from being squeezed to nothing.
+    /// `ABM_QUERYPOS` asks the system where an appbar may sit and slides the
+    /// rectangle clear of the ones already there -- the shell's taskbar among
+    /// them, because hiding its window with `ShowWindow` does not retract its
+    /// reservation. Honouring that while replacing it parks us one taskbar
+    /// height up the screen, with a strip of wallpaper underneath. So when we
+    /// are the taskbar we keep our own rectangle and claim the edge outright,
+    /// and only negotiate when we are sharing the screen with the shell's bar.
     pub fn reposition(&self) {
         if !self.registered {
             return;
@@ -214,14 +220,15 @@ impl AppBar {
         let mut abd = self.data();
         abd.rc = self.desired();
 
-        unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
-
-        let t = self.physical_thickness();
-        match self.edge {
-            Edge::Top => abd.rc.bottom = abd.rc.top + t,
-            Edge::Bottom => abd.rc.top = abd.rc.bottom - t,
-            Edge::Left => abd.rc.right = abd.rc.left + t,
-            Edge::Right => abd.rc.left = abd.rc.right - t,
+        if !self.replace_shell {
+            unsafe { SHAppBarMessage(ABM_QUERYPOS, &mut abd) };
+            let t = self.physical_thickness();
+            match self.edge {
+                Edge::Top => abd.rc.bottom = abd.rc.top + t,
+                Edge::Bottom => abd.rc.top = abd.rc.bottom - t,
+                Edge::Left => abd.rc.right = abd.rc.left + t,
+                Edge::Right => abd.rc.left = abd.rc.right - t,
+            }
         }
 
         unsafe { SHAppBarMessage(ABM_SETPOS, &mut abd) };

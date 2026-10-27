@@ -9,7 +9,12 @@ above the bar the way it stopped above the shell's taskbar. Nothing is set
 topmost and the z-order is left alone — this is not an overlay.
 
 The shell's own taskbar is hidden, never closed, and only once the reservation
-is in hand, so the edge is never unowned. Putting it back is covered three ways:
+is in hand, so the edge is never unowned. Hiding its window does not retract
+its appbar reservation, so `ABM_QUERYPOS` -- which exists to slide a new appbar
+clear of the ones already there -- would park us one taskbar height up the
+screen. While replacing it we claim the edge outright and skip that
+negotiation; with `replaceShell` off we honour it, because then we really are
+sharing the screen. Putting it back is covered three ways:
 `Drop` on the ordinary exit, a panic hook, and a marker file in
 `%LOCALAPPDATA%\codabar` that lets the next run undo a hide left behind by a
 crash. Turning off **Substituir a barra do Windows** in the settings leaves the
@@ -43,9 +48,10 @@ cannot truncate it.
 
 ## Widgets
 
-Working: the Start button, the open windows on the bar's monitor, clock,
-microphone mute (Core Audio, default capture device), the Claude Code button,
-settings.
+Working: the Start button, the open windows on the bar's monitor, network
+(wi-fi SSID and signal through the WLAN service, falling back to the network
+list manager for a wired link), clock, microphone mute (Core Audio, default
+capture device), the Claude Code button, settings.
 
 The window list filters the way the shell's own taskbar does -- visible,
 titled, unowned, not a tool window, and not DWM-cloaked, which is what keeps
@@ -53,8 +59,8 @@ suspended UWP apps and phantom `ApplicationFrame` windows out. Icons come from
 `WM_GETICON`, then the window class, then the executable, and are cached per
 window until the process behind it changes. Click focuses, middle-click closes.
 
-Not yet: Wi-Fi, mixer, the shell's notification area, VPN, music. They appear
-greyed out in the settings rather than as widgets that do nothing.
+Not yet: mixer, the shell's notification area, VPN, music. They appear greyed
+out in the settings rather than as widgets that do nothing.
 
 The background-apps tray is the hard one. Tray icons belong to the shell: apps
 call `Shell_NotifyIcon`, which finds `Shell_TrayWnd` and sends `WM_COPYDATA` to

@@ -5,6 +5,8 @@ mod appbar;
 mod audio;
 mod config;
 #[cfg(windows)]
+mod net;
+#[cfg(windows)]
 mod winlist;
 
 use std::sync::Mutex;
@@ -194,6 +196,38 @@ fn close_window(hwnd: isize) {
     let _ = hwnd;
 }
 
+/// Open the Windows network pane, which is what a click on the widget wants.
+#[tauri::command]
+fn open_network_settings() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", "ms-availablenetworks:"])
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(windows))]
+    {
+        Err("only on windows".into())
+    }
+}
+
+#[tauri::command]
+fn net_status() -> Option<net::NetInfo> {
+    #[cfg(windows)]
+    {
+        Some(net::status())
+    }
+    #[cfg(not(windows))]
+    {
+        None
+    }
+}
+
 #[tauri::command]
 fn mic_muted() -> Option<bool> {
     #[cfg(windows)]
@@ -281,6 +315,8 @@ fn main() {
             mic_muted,
             toggle_mic,
             open_start_menu,
+            net_status,
+            open_network_settings,
             list_windows,
             focus_window,
             close_window

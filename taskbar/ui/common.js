@@ -41,6 +41,13 @@ const PATHS = {
   micOff: ["m2 2 20 20", "M18.89 13.23A7 7 0 0 0 19 12v-2", "M5 10v2a7 7 0 0 0 12 5", "M15 9.34V5a3 3 0 0 0-5.68-1.33", "M9 9v3a3 3 0 0 0 5.12 2.12", "M12 19v3"],
   settings: ["M20 7h-9", "M14 17H5", "M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", "M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
   terminal: ["m4 17 6-6-6-6", "M12 19h8"],
+  // Four wi-fi strengths: the arcs drop away as the signal does, so the shape
+  // itself carries the reading without needing a number.
+  wifi3: ["M12 20h.01", "M5 12.9a10 10 0 0 1 14 0", "M8.5 16.4a5 5 0 0 1 7 0", "M2 8.8a15 15 0 0 1 20 0"],
+  wifi2: ["M12 20h.01", "M5 12.9a10 10 0 0 1 14 0", "M8.5 16.4a5 5 0 0 1 7 0"],
+  wifi1: ["M12 20h.01", "M8.5 16.4a5 5 0 0 1 7 0"],
+  wifi0: ["M12 20h.01", "m2 2 20 20", "M8.5 16.4a5 5 0 0 1 7 0"],
+  wired: ["M6.5 7h11", "M12 7v4", "M4 11h16v4H4z", "M8 19v-4", "M16 19v-4"],
   // Drawn in icon() rather than here: it is filled, not stroked.
   start: null,
 };
